@@ -1,0 +1,334 @@
+#!/bin/bash
+
+ME=${0##*/}
+
+ZDIR=/usr/share/zoneinfo
+SDIR=/etc/apt/sources.list.d
+
+HOST_PREFIXES="NL LA UT OLD_US"
+HOST_TYPES="AX MX MP"
+US_HOST_LIST="LA UT"
+
+UT_AX_HOST=antix.daveserver.info
+UT_MP_HOST=mxrepo.com/mepiscr
+UT_MX_HOST=mxrepo.com/mx
+
+LA_AX_HOST=iso.mxrepo.com/antix
+LA_MP_HOST=iso.mxrepo.com/mepiscr
+LA_MX_HOST=iso.mxrepo.com/mx
+
+NL_AX_HOST=nl.mxrepo.com/antix
+NL_MP_HOST=nl.mxrepo.com/mepiscr
+NL_MX_HOST=nl.mxrepo.com/mx
+
+OLD_US_AX_HOST=antix.daveserver.info
+OLD_US_MP_HOST=main.mepis-deb.org/mepiscr
+OLD_US_MX_HOST=main.mepis-deb.org/mx
+
+usage() {
+    local ret=${1:-0}
+    cat<<Usage
+Usage: $me [options] <timezone|country-code>
+
+Update the mirrors in the *.list files under $SDIR/
+with the closest mirrors based on timezone city or two-letter
+country code.
+
+Options:
+    -d --dir=<dir>  Use <dir> instead of $SDIR
+    -h --help       Show this help
+    -p --pretend    Don't do anything just show what would be done
+    -q --quiet      Print less
+    -v --verbose    Print more
+Usage
+
+    exit $ret
+}
+
+main() {
+    local param val
+    while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
+        param=${1#-}
+        shift
+
+        case $param in
+          -dir|d) [ $# -lt 1 ] && fatal "Expected a parameter after: -$param"
+                    val=$1
+                    [ -n "$val" -a -z "${val##-*}" ] \
+                        && fatal "Suspicious parameter after -$param: $val"
+
+                    shift           ;;
+              *=*)  val=${param#*=} ;;
+                *)  val="???"       ;;
+        esac
+
+        case $param in
+         -dir=*|d=*) SDIR=$val                         ;;
+             -dir|d) SDIR=$val                         ;;
+            -help|h) usage                             ;;
+         -pretend|p) PRETEND=true                      ;;
+           -quiet|q) QUIET=true                        ;;
+         -verbose|v) VERBOSE=true                      ;;
+                  *) fatal "Unknown argument: -$param" ;;
+        esac
+    done
+
+    [ $# -lt 1 ] && usage
+    [ $# -gt 1 ] && fatal "Only expected one command line argument"
+
+    local tz=$1
+
+    find_zonetab_file || fatal "Could not find zone.tab file"
+
+    case $tz in
+        [a-zA-Z][a-zA-Z]) country_code_to_timezone $tz
+                          tz=$NEW_TZ ;;
+    esac
+
+    local mx_ax_code=$(mx_ax_code $tz)
+    local   deb_code=$(deb_code   $tz)
+    vsay "deb mirror: $deb_code"
+
+    [ "$mx_ax_code" = "US"  ] && assign_random_server "US" $US_HOST_LIST
+
+    # Only update if the mirror is different from the one we want
+    SED_EXPR="-e /ftp\.$deb_code\.debian\.org/!s=(http://ftp\.)[a-z][a-z](\.debian.org/debian/)=\1$deb_code\2="
+    SED_EXPR_P="${SED_EXPR}p"
+
+    assign_exprs $mx_ax_code
+
+    [ -d "$SDIR" ] || fatal "'$SDIR' is not a directory"
+
+    local file fcnt=0
+    for file in $(find $SDIR -maxdepth 1 -name "*.list"); do
+
+        # Use diff to see if there would be any change to the file
+        local diff=$(sed -r $SED_EXPR $file | diff -q $file -)
+        [ "$diff" ] || continue
+
+        fcnt=$((fnct + 1))
+        if [ "$PRETEND" -o "$VERBOSE" ]; then
+            echo "File: $(basename $file)"
+            sed -n -r $SED_EXPR_P $file
+        fi
+
+        [ "$PRETEND" ] && continue
+
+        [ -z "$VERBOSE" ] && qsay "File: $(basename $file)"
+        sed -i -r $SED_EXPR $file
+    done
+}
+
+# Add "-e $REGEX" and add "-e ${REGEX}p" to SED_EXPR and SED_EXPR_P.
+# Totally data-driven.  Add more mirror sets and/or more mirrors by merely
+# adding (and adding to) variables.  Relies on no spaces or tabs in the
+# hostnames.  If this is violated then we could migrate to Bash lists.
+
+assign_exprs() {
+    local prefix=$1  type host
+    for type in $HOST_TYPES; do
+        eval host=\$${prefix}_${type}_HOST
+        local oprefix ohost_list= ohost
+        for oprefix in $HOST_PREFIXES; do
+            [ "$oprefix" = "$prefix" ] && continue
+            eval ohost=\$${oprefix}_${type}_HOST
+            ohost_list=$ohost_list${ohost_list:+|}$ohost
+        done
+        ohost_list=$(echo $ohost_list | sed 's/\./\\\./g')
+        local sed="s=(http://)($ohost_list)(/)=\1$host\3="
+        #echo SED_$type=$sed
+        SED_EXPR="$SED_EXPR -e $sed"
+        SED_EXPR_P="$SED_EXPR_P -e ${sed}p"
+    done
+}
+
+# Assign random servers for all types based on prefixes.  The first
+# arg is the prefix of the target string.  The remaining args are
+# the prefixes of the strings we are assigning from.  You can get
+# rough weighting by repeating prefixes.
+assign_random_server() {
+    local targ=$1  prefix  type
+    shift
+
+    local cnt=$#
+    local rand=$(($RANDOM % cnt))
+    shift $rand
+    prefix=$1
+  
+    for type in $HOST_TYPES; do
+        #echo ${targ}_${type}_HOST=\$${prefix}_${type}_HOST
+        eval ${targ}_${type}_HOST=\$${prefix}_${type}_HOST
+    done
+}
+
+find_zonetab_file() {
+    local z dir=${1:-$ZDIR}
+
+    ZONE_TAB=
+    for z in zone.tab zone1970.tab; do
+        test -r $dir/$z || continue
+        ZONE_TAB=$dir/$z
+        return 0
+    done
+    return 1
+}
+
+mx_ax_code() {
+    local tz=$1
+
+    case $tz in
+        America/*)	    echo US ;;
+        Antarctica/*)	echo US ;;
+        Atlantic/*)	    echo US ;;
+        Australia/*)	echo US ;;
+
+        Africa/*)	    echo NL ;;
+        Arctic/*)	    echo NL ;;
+        Europe/*)	    echo NL ;;
+
+        Asia/*)	        mx_ax_code_by_longitude $tz ;;
+        Indian/*)	    mx_ax_code_by_longitude $tz ;;
+        Pacific/*)	    mx_ax_code_by_longitude $tz ;;
+    esac
+}
+
+mx_ax_code_by_longitude() {
+    local tz=$1
+    local long=$(tz_to_long $tz)
+    if [ -z "$long" ]; then
+        error "No longitude found for timezone: $tz"
+        return 2
+    fi
+    if [ $long -gt -40 -a $long -lt 90 ]; then
+        echo NL
+    else
+        echo US
+    fi
+    return 0
+}
+
+country_code_to_timezone() {
+    local ccode=$1
+
+    case $ccode in
+        uk) ccode=gb ;;
+    esac
+
+    NEW_TZ=$(ccode_to_tz $ccode)
+    [ -z "$NEW_TZ" ] && fatal "Could not find a timezone for country: $ccode"
+    vsay "Found timezone: $NEW_TZ for country code: $ccode"
+}
+
+deb_code() {
+    local tz=$1
+    local ccode=$(tz_to_ccode $tz)
+    if [ -z "$ccode" ]; then
+        error "No city code found for timezone: $tz"
+        return 2
+    fi
+
+    # Note: most of the case statement was created by deb-mirror-by-tz.pl
+    case $ccode in
+                                         gb) ccode=uk;;
+
+                                         at) ccode=at;;
+                          aq|au|cx|mu|re|tf) ccode=au;;
+                                      be|lu) ccode=be;;
+                                al|bg|me|mk) ccode=bg;;
+        ag|ai|ao|aw|bb|bl|bo|bq|br|bw|ci|co) ccode=br;;
+        cw|dm|ec|gd|gf|gn|gp|gy|kn|lc|lr|ls) ccode=br;;
+        mf|mq|ms|na|pe|pr|py|sl|sr|sx|tt|vc) ccode=br;;
+                                ve|vg|vi|za) ccode=br;;
+                                         by) ccode=by;;
+                                   ca|gl|pm) ccode=ca;;
+                                   ch|li|mc) ccode=ch;;
+                          ar|cl|ec|pf|pn|uy) ccode=cl;;
+                       bt|cn|kg|kz|mn|np|uz) ccode=cn;;
+                                         cz) ccode=cz;;
+                                         de) ccode=de;;
+                                         dk) ccode=dk;;
+                                         ee) ccode=ee;;
+                                   ad|dz|es) ccode=es;;
+                                       "fi") ccode=fi;;
+                                         fr) ccode=fr;;
+        bi|cd|cf|cg|cm|eg|ga|gq|gr|rw|sd|ss) ccode=gr;;
+                             sz|td|ug|zm|zw) ccode=gr;;
+                                hk|mo|ph|tl) ccode=hk;;
+                                      ba|hr) ccode=hr;;
+                                      hu|rs) ccode=hu;;
+                                      ie|im) ccode=ie;;
+        ae|af|am|az|bh|cy|dj|er|et|ge|il|iq) ccode=ir;;
+        ir|jo|ke|km|kw|kz|lb|mg|mw|mz|om|pk) ccode=ir;;
+        ps|qa|sa|sc|so|sy|tj|tm|tz|uz|ye|yt) ccode=ir;;
+                                   fo|is|sj) ccode=is;;
+                          it|ly|mt|sm|tn|va) ccode=it;;
+                                         jp) ccode=jp;;
+                                      kp|kr) ccode=kr;;
+                                      lt|lv) ccode=lt;;
+                 bs|bz|cu|do|ht|jm|ky|mx|tc) ccode=mx;;
+        as|fj|fm|gu|ki|mh|mp|nc|nf|nr|pg|pw) ccode=nc;;
+                       sb|tk|to|tv|vu|wf|ws) ccode=nc;;
+                                         nl) ccode=nl;;
+                                         no) ccode=no;;
+                                ck|nu|nz|pf) ccode=nz;;
+                                         pl) ccode=pl;;
+        bf|bj|bm|cv|eh|fk|gh|gi|gm|gs|gw|ma) ccode=pt;;
+                 ml|mr|ne|ng|pt|sh|sn|st|tg) ccode=pt;;
+                                      md|ro) ccode=ro;;
+                                   kz|mn|ru) ccode=ru;;
+                                      ax|se) ccode=se;;
+                                         si) ccode=si;;
+                                         sk) ccode=sk;;
+                          cr|gt|hn|ni|pa|sv) ccode=sv;;
+        bd|bn|cc|id|in|io|kh|la|lk|mm|mv|my) ccode=th;;
+                                   sg|th|vn) ccode=th;;
+                                         tr) ccode=tr;;
+                                      id|tw) ccode=tw;;
+                                         ua) ccode=ua;;
+                                   uk|gg|je) ccode=uk;;
+                                   ki|um|us) ccode=us;;
+
+                                          *) fatal "Unknown country code: $ccode"
+                                             ccode=us;;
+    esac
+
+    echo $ccode
+    return 0
+}
+
+tz_to_ccode() {
+    local tz=$1
+    cut -s -f1,3 $ZONE_TAB | grep "\s$tz$" | cut -f1 | tr '[A-Z]' '[a-z]'
+}
+
+ccode_to_tz() {
+    local code=$1
+    cut -s -f1,3 $ZONE_TAB | grep -i "^$code\s" | head -n1 | cut -f2
+}
+
+tz_to_long() {
+    local tz=$1
+    cut -s -f2,3 $ZONE_TAB | grep "\s$tz$" | sed -r 's/.*[0-9]([+-][0-9][0-9][0-9])[0-9]*.*/\1/'
+}
+
+error() {
+    echo "$ME Error: $*" >&2
+}
+
+fatal() {
+    echo "$ME Fatal Error: $*" >&2
+    exit 5
+}
+
+vsay() {
+    [ "$VERBOSE" ] || return
+    echo "$*"
+}
+
+qsay() {
+    [ "$QUIET" ] && return
+    echo "$*"
+}
+
+
+main "$@"
