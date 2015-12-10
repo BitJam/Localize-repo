@@ -5,7 +5,7 @@ ME=${0##*/}
 ZDIR=/usr/share/zoneinfo
 SDIR=/etc/apt/sources.list.d
 
-HOST_PREFIXES="NL LA UT OLD_US"
+HOST_PREFIXES="NL LA NZ UT OLD_US"
 HOST_TYPES="AX MX MP"
 US_HOST_LIST="LA UT"
 
@@ -20,6 +20,10 @@ LA_MX_HOST=iso.mxrepo.com/mx
 NL_AX_HOST=nl.mxrepo.com/antix
 NL_MP_HOST=nl.mxrepo.com/mepiscr
 NL_MX_HOST=nl.mxrepo.com/mx
+
+NZ_AX_HOST=mx.debian.nz/antix
+NZ_MP_HOST=mx.debian.nz/mepiscr
+NZ_MX_HOST=mx.debian.nz/mx
 
 OLD_US_AX_HOST=antix.daveserver.info
 OLD_US_MP_HOST=main.mepis-deb.org/mepiscr
@@ -154,7 +158,7 @@ assign_random_server() {
     local rand=$(($RANDOM % cnt))
     shift $rand
     prefix=$1
-  
+
     for type in $HOST_TYPES; do
         #echo ${targ}_${type}_HOST=\$${prefix}_${type}_HOST
         eval ${targ}_${type}_HOST=\$${prefix}_${type}_HOST
@@ -177,18 +181,98 @@ mx_ax_code() {
     local tz=$1
 
     case $tz in
-        America/*)	    echo US ;;
-        Antarctica/*)	echo US ;;
-        Atlantic/*)	    echo US ;;
-        Australia/*)	echo US ;;
+        Asia/Colombo)          echo NZ ;;
+        Asia/Novosibirsk)      echo NZ ;;
+        Asia/Kathmandu)        echo NZ ;;
+        Asia/Novokuznetsk)     echo NZ ;;
+        Asia/Urumqi)           echo NZ ;;
+        Asia/Kolkata)          echo NZ ;;
+        Asia/Thimphu)          echo NZ ;;
+        Asia/Dhaka)            echo NZ ;;
+        Asia/Hovd)             echo NZ ;;
+        Asia/Krasnoyarsk)      echo NZ ;;
+        Asia/Rangoon)          echo NZ ;;
+        Indian/Cocos)          echo NZ ;;
+        Asia/Bangkok)          echo NZ ;;
+        Asia/Kuala_Lumpur)     echo NZ ;;
+        Asia/Vientiane)        echo NZ ;;
+        Asia/Singapore)        echo NZ ;;
+        Asia/Irkutsk)          echo NZ ;;
+        Asia/Phnom_Penh)       echo NZ ;;
+        Indian/Christmas)      echo NZ ;;
+        Asia/Ho_Chi_Minh)      echo NZ ;;
+        Asia/Jakarta)          echo NZ ;;
+        Asia/Ulaanbaatar)      echo NZ ;;
+        Asia/Pontianak)        echo NZ ;;
+        Asia/Kuching)          echo NZ ;;
+        Asia/Chita)            echo NZ ;;
+        Asia/Macau)            echo NZ ;;
+        Asia/Hong_Kong)        echo NZ ;;
+        Asia/Choibalsan)       echo NZ ;;
+        Asia/Brunei)           echo NZ ;;
+        Australia/Perth)       echo NZ ;;
+        Asia/Makassar)         echo NZ ;;
+        Asia/Manila)           echo NZ ;;
+        Asia/Shanghai)         echo NZ ;;
+        Asia/Taipei)           echo NZ ;;
+        Asia/Dili)             echo NZ ;;
+        Asia/Pyongyang)        echo NZ ;;
+        Asia/Seoul)            echo NZ ;;
+        Australia/Eucla)       echo NZ ;;
+        Asia/Yakutsk)          echo NZ ;;
+        Australia/Darwin)      echo NZ ;;
+        Asia/Vladivostok)      echo NZ ;;
+        Pacific/Palau)         echo NZ ;;
+        Asia/Khandyga)         echo NZ ;;
+        Australia/Adelaide)    echo NZ ;;
+        Asia/Tokyo)            echo NZ ;;
+        Asia/Jayapura)         echo NZ ;;
+        Australia/Broken_Hill) echo NZ ;;
+        Asia/Sakhalin)         echo NZ ;;
+        Asia/Ust)              echo NZ ;;
+        Australia/Currie)      echo NZ ;;
+        Pacific/Guam)          echo NZ ;;
+        Australia/Melbourne)   echo NZ ;;
+        Pacific/Saipan)        echo NZ ;;
+        Pacific/Port_Moresby)  echo NZ ;;
+        Australia/Hobart)      echo NZ ;;
+        Australia/Lindeman)    echo NZ ;;
+        Asia/Magadan)          echo NZ ;;
+        Australia/Sydney)      echo NZ ;;
+        Pacific/Chuuk)         echo NZ ;;
+        Australia/Brisbane)    echo NZ ;;
+        Asia/Srednekolymsk)    echo NZ ;;
+        Pacific/Bougainville)  echo NZ ;;
+        Pacific/Pohnpei)       echo NZ ;;
+        Asia/Kamchatka)        echo NZ ;;
+        Australia/Lord_Howe)   echo NZ ;;
+        Pacific/Guadalcanal)   echo NZ ;;
+        Pacific/Kosrae)        echo NZ ;;
+        Pacific/Noumea)        echo NZ ;;
+        Pacific/Wake)          echo NZ ;;
+        Pacific/Nauru)         echo NZ ;;
+        Pacific/Kwajalein)     echo NZ ;;
+        Pacific/Norfolk)       echo NZ ;;
+        Pacific/Efate)         echo NZ ;;
+        Pacific/Majuro)        echo NZ ;;
+        Pacific/Tarawa)        echo NZ ;;
+        Pacific/Auckland)      echo NZ ;;
+        Asia/Anadyr)           echo NZ ;;
+        Pacific/Fiji)          echo NZ ;;
+        Pacific/Funafuti)      echo NZ ;;
 
-        Africa/*)	    echo NL ;;
-        Arctic/*)	    echo NL ;;
-        Europe/*)	    echo NL ;;
+        America/*)             echo US ;;
+        Antarctica/*)          echo US ;;
+        Atlantic/*)            echo US ;;
+        Australia/*)           echo US ;;
 
-        Asia/*)	        mx_ax_code_by_longitude $tz ;;
-        Indian/*)	    mx_ax_code_by_longitude $tz ;;
-        Pacific/*)	    mx_ax_code_by_longitude $tz ;;
+        Africa/*)              echo NL ;;
+        Arctic/*)              echo NL ;;
+        Europe/*)              echo NL ;;
+
+        Asia/*)      mx_ax_code_by_longitude $tz ;;
+        Indian/*)    mx_ax_code_by_longitude $tz ;;
+        Pacific/*)   mx_ax_code_by_longitude $tz ;;
     esac
 }
 
