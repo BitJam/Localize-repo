@@ -54,10 +54,18 @@ Usage
 }
 
 main() {
-    local param val
+    local param val short_stack="cdhHpqv"
     while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
         param=${1#-}
         shift
+
+        case $param in
+            [$short_stack][$short_stack]*)
+                if [ -z "${param//[$short_stack]/}" ]; then
+                    set -- $(echo $param | sed -r 's/([a-zA-Z])/ -\1 /g') "$@"
+                    continue
+                fi;;
+        esac
 
         case $param in
           -dir|d) [ $# -lt 1 ] && fatal "Expected a parameter after: -$param"
