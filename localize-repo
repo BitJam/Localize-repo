@@ -39,8 +39,12 @@ with the closest mirrors based on timezone city or two-letter
 country code.
 
 Options:
+    -c --codes      Only display codes for the servers that would
+                    be used for the given timezone
     -d --dir=<dir>  Use <dir> instead of $SDIR
     -h --help       Show this help
+    -H --Hosts      Only show the hosts that would be used for the
+                    given timezone
     -p --pretend    Don't do anything just show what would be done
     -q --quiet      Print less
     -v --verbose    Print more
@@ -67,9 +71,11 @@ main() {
         esac
 
         case $param in
+           -codes|c) CODES_ONLY=true                   ;;
          -dir=*|d=*) SDIR=$val                         ;;
              -dir|d) SDIR=$val                         ;;
             -help|h) usage                             ;;
+           -hosts|H) HOSTS_ONLY=true                   ;;
          -pretend|p) PRETEND=true                      ;;
            -quiet|q) QUIET=true                        ;;
          -verbose|v) VERBOSE=true                      ;;
@@ -92,6 +98,19 @@ main() {
     local mx_ax_code=$(mx_ax_code $tz)
     local   deb_code=$(deb_code   $tz)
     vsay "deb mirror: $deb_code"
+
+    [ "$CODES_ONLY" ] && echo -e "$mx_ax_code\n$deb_code"
+
+    if [ "$HOSTS_ONLY" ]; then
+        local type host
+        for type in $HOST_TYPES; do
+            eval host=\$${mx_ax_code}_${type}_HOST
+            echo " $type: $host"
+        done
+        echo "deb: http://ftp.$deb_code.debian.org/debian"
+    fi
+
+    [ -n "$CODES_ONLY" -o -n "$HOSTS_ONLY" ] && exit 0
 
     [ "$mx_ax_code" = "US"  ] && assign_random_server "US" $US_HOST_LIST
 
