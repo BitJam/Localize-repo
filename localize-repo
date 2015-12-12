@@ -32,11 +32,12 @@ OLD_US_MX_HOST=main.mepis-deb.org/mx
 usage() {
     local ret=${1:-0}
     cat<<Usage
-Usage: $me [options] <timezone|country-code>
+Usage: $me [options] <timezone|country-code|"default">
 
 Update the mirrors in the *.list files under $SDIR/
 with the closest mirrors based on timezone city or two-letter
-country code.
+country code.  If "default" is given then use the timezone
+in the /etc/timezone file.
 
 Options:
     -c --codes      Only display codes for the servers that would
@@ -95,6 +96,15 @@ main() {
     [ $# -gt 1 ] && fatal "Only expected one command line argument"
 
     local tz=$1
+
+    local tz_file=/etc/timezone
+    if [ "$tz" = "default" ]; then
+        test -r $tz_file || fatal "Could not find file $tz_file"
+        read tz 2>/dev/null <$tz_file
+        vsay "Current timezone: $tz"
+    fi
+
+    [ ${#tz} -lt 1 ] && fatal "Timezone or country code too short: $tz"
 
     find_zonetab_file || fatal "Could not find zone.tab file"
 
