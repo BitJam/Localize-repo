@@ -117,7 +117,9 @@ main() {
     local   deb_code=$(deb_code   $tz)
     vsay "deb mirror: $deb_code"
 
-    [ "$CODES_ONLY" ] && echo -e "$mx_ax_code\n$deb_code"
+    [ "$CODES_ONLY" ] && echo -e "MX/aX code: $mx_ax_code\n  Deb code: $deb_code"
+
+    [ "$mx_ax_code" = "US"  ] && assign_random_server "US" $US_HOST_LIST
 
     if [ "$HOSTS_ONLY" ]; then
         local type host
@@ -125,12 +127,11 @@ main() {
             eval host=\$${mx_ax_code}_${type}_HOST
             echo " $type: $host"
         done
-        echo "deb: http://ftp.$deb_code.debian.org/debian"
+        echo "deb: ftp.$deb_code.debian.org/debian"
     fi
 
     [ -n "$CODES_ONLY" -o -n "$HOSTS_ONLY" ] && exit 0
 
-    [ "$mx_ax_code" = "US"  ] && assign_random_server "US" $US_HOST_LIST
 
     # Only update if the mirror is different from the one we want
     SED_EXPR="-e /ftp\.$deb_code\.debian\.org/!s=(http://ftp\.)[a-z][a-z](\.debian.org/debian/)=\1$deb_code\2="
