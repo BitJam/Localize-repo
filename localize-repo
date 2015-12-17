@@ -5,8 +5,7 @@ ME=${0##*/}
 ZDIR=/usr/share/zoneinfo
 SDIR=/etc/apt/sources.list.d
 
-#HOST_PREFIXES="NL LA NZ UT OLD_US"
-HOST_PREFIXES="NL LA UT OLD_US"
+HOST_PREFIXES="NL LA NZ UT OLD_US"
 HOST_TYPES="AX MX MP"
 US_HOST_LIST="LA UT"
 
