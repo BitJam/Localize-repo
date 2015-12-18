@@ -44,7 +44,7 @@ Options:
                     be used for the given timezone
     -d --dir=<dir>  Use <dir> instead of $SDIR
     -h --help       Show this help
-    -H --Hosts      Only show the hosts that would be used for the
+    -H --hosts      Only show the hosts that would be used for the
                     given timezone
     -p --pretend    Don't do anything just show what would be done
     -q --quiet      Print less
