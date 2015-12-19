@@ -97,6 +97,10 @@ main() {
 
     local tz=$1
 
+    case $tz in
+        GMT|UTC|Greenwich) tz=Europe/London ;;
+    esac
+
     local tz_file=/etc/timezone
     if [ "$tz" = "default" ]; then
         test -r $tz_file || fatal "Could not find file $tz_file"
