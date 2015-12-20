@@ -98,7 +98,7 @@ main() {
     local tz=$1
 
     case $tz in
-        GMT|UTC|Greenwich) tz=Europe/London ;;
+        */UTC|GMT|UTC|Greenwich) tz=Europe/London ;;
     esac
 
     local tz_file=/etc/timezone
