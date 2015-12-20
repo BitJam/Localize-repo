@@ -120,6 +120,8 @@ main() {
     local mx_ax_code=$(mx_ax_code $tz)
     local   deb_code=$(deb_code   $tz)
     vsay "deb mirror: $deb_code"
+    [ ${#deb_code} -eq 0 ]   && fatal "No country code found for timezone: $tz"
+    [ ${#mx_ax_code} -eq 0 ] && fatal "No MX/antiX mirrors found for timezone: $tz"
 
     [ "$CODES_ONLY" ] && echo -e "MX/aX code: $mx_ax_code\n  Deb code: $deb_code"
 
@@ -349,7 +351,6 @@ deb_code() {
     local tz=$1
     local ccode=$(tz_to_ccode $tz)
     if [ -z "$ccode" ]; then
-        error "No city code found for timezone: $tz"
         return 2
     fi
 
