@@ -98,7 +98,7 @@ main() {
     local tz=$1
 
     case $tz in
-        */UTC|GMT|UTC|Greenwich) tz=Europe/London ;;
+        */UTC) not_setting $tz ;;
     esac
 
     local tz_file=/etc/timezone
@@ -445,6 +445,12 @@ error() {
 fatal() {
     echo "$ME Fatal Error: $*" >&2
     exit 5
+}
+
+not_setting() {
+    local tz=$1
+    printf "Not setting repository mirrors based on %s timezone\n"  "$tz"
+    exit 0
 }
 
 vsay() {
