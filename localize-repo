@@ -299,6 +299,7 @@ get_codes() {
                     Africa/Monrovia) deb_code=br ; mx_order=gr,nl,ec,ut,la,tw,nz ;;
                       Africa/Bamako) deb_code=pt ; mx_order=gr,nl,ut,ec,la,tw,nz ;;
                   Africa/Casablanca) deb_code=pt ; mx_order=nl,gr,ut,ec,la,tw,nz ;;
+                       Africa/Ceuta) deb_code=pt ; mx_order=nl,gr,ut,ec,la,tw,nz ;;
                      Africa/Abidjan) deb_code=br ; mx_order=gr,nl,ec,ut,la,tw,nz ;;
                  Africa/Ouagadougou) deb_code=pt ; mx_order=gr,nl,ut,ec,la,tw,nz ;;
                        Africa/Accra) deb_code=pt ; mx_order=gr,nl,ec,ut,la,tw,nz ;;
@@ -351,12 +352,12 @@ get_codes() {
                      America/Inuvik) deb_code=ca ; mx_order=la,ut,nl,tw,gr,ec,nz ;;
                  America/Metlakatla) deb_code=us ; mx_order=la,ut,nl,ec,tw,gr,nz ;;
                   America/Vancouver) deb_code=ca ; mx_order=la,ut,ec,nl,tw,gr,nz ;;
+                America/Fort_Nelson) deb_code=ca ; mx_order=la,ut,nl,ec,gr,tw,nz ;;
                America/Dawson_Creek) deb_code=ca ; mx_order=la,ut,nl,ec,gr,tw,nz ;;
                 America/Los_Angeles) deb_code=us ; mx_order=la,ut,ec,nl,tw,gr,nz ;;
                     America/Tijuana) deb_code=mx ; mx_order=la,ut,ec,nl,tw,gr,nz ;;
                     America/Creston) deb_code=ca ; mx_order=la,ut,ec,nl,gr,tw,nz ;;
                       America/Boise) deb_code=us ; mx_order=la,ut,ec,nl,gr,tw,nz ;;
-               America/Santa_Isabel) deb_code=mx ; mx_order=la,ut,ec,nl,gr,tw,nz ;;
                 America/Yellowknife) deb_code=ca ; mx_order=la,ut,nl,ec,gr,tw,nz ;;
                    America/Edmonton) deb_code=ca ; mx_order=la,ut,ec,nl,gr,tw,nz ;;
                     America/Phoenix) deb_code=us ; mx_order=la,ut,ec,nl,gr,tw,nz ;;
@@ -533,6 +534,7 @@ get_codes() {
                         Asia/Almaty) deb_code=cn ; mx_order=gr,tw,nl,ut,nz,la,ec ;;
                        Asia/Colombo) deb_code=th ; mx_order=tw,gr,nl,nz,ut,la,ec ;;
                    Asia/Novosibirsk) deb_code=ru ; mx_order=tw,gr,nl,ut,la,nz,ec ;;
+                       Asia/Barnaul) deb_code=ru ; mx_order=tw,gr,nl,ut,la,nz,ec ;;
                      Asia/Kathmandu) deb_code=cn ; mx_order=tw,gr,nl,nz,ut,la,ec ;;
                   Asia/Novokuznetsk) deb_code=ru ; mx_order=tw,gr,nl,ut,la,nz,ec ;;
                         Asia/Urumqi) deb_code=cn ; mx_order=tw,gr,nl,nz,ut,la,ec ;;
@@ -583,6 +585,7 @@ get_codes() {
                 Atlantic/Cape_Verde) deb_code=pt ; mx_order=nl,gr,ec,ut,la,tw,nz ;;
                  Atlantic/Reykjavik) deb_code=is ; mx_order=nl,gr,ut,la,ec,tw,nz ;;
                    Atlantic/Madeira) deb_code=pt ; mx_order=nl,gr,ut,ec,la,tw,nz ;;
+                    Atlantic/Canary) deb_code=pt ; mx_order=nl,gr,ut,ec,la,tw,nz ;;
                      Atlantic/Faroe) deb_code=is ; mx_order=nl,gr,ut,la,ec,tw,nz ;;
                  Atlantic/St_Helena) deb_code=pt ; mx_order=gr,nl,ec,ut,la,tw,nz ;;
                     Australia/Perth) deb_code=au ; mx_order=nz,tw,gr,nl,la,ec,ut ;;
@@ -652,6 +655,8 @@ get_codes() {
                   Europe/Zaporozhye) deb_code=ua ; mx_order=gr,nl,tw,ut,la,ec,nz ;;
                       Europe/Moscow) deb_code=ru ; mx_order=nl,gr,tw,ut,la,ec,nz ;;
                    Europe/Volgograd) deb_code=ru ; mx_order=gr,nl,tw,ut,la,ec,nz ;;
+                   Europe/Astrakhan) deb_code=ru ; mx_order=gr,nl,tw,ut,la,ec,nz ;;
+                   Europe/Ulyanovsk) deb_code=ru ; mx_order=gr,nl,tw,ut,la,ec,nz ;;
                       Europe/Samara) deb_code=ru ; mx_order=gr,nl,tw,ut,la,ec,nz ;;
                       Indian/Comoro) deb_code=ir ; mx_order=gr,nl,tw,nz,ec,ut,la ;;
                      Indian/Mayotte) deb_code=ir ; mx_order=gr,nl,tw,nz,ec,ut,la ;;
@@ -703,7 +708,7 @@ get_codes() {
                    Pacific/Auckland) deb_code=nz ; mx_order=nz,tw,la,ec,ut,gr,nl ;;
                        Pacific/Fiji) deb_code=nc ; mx_order=nz,tw,la,ec,ut,nl,gr ;;
                    Pacific/Funafuti) deb_code=nc ; mx_order=nz,tw,la,ec,ut,nl,gr ;;
-   esac
+    esac
 }
 
 main "$@"
