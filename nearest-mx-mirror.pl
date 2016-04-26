@@ -7,6 +7,8 @@ use Math::Trig qw/great_circle_distance pi/;
 
 my $zone_file = "zone.tab";
 
+my $IGNORE_DEB_TZ = "Canary|Ceuta";
+
 my @DEB_CODES =  qw/at au be bg br by ca ch cl cn cz de dk ee es
     fi fr gr hk hr hu ie ir is it jp kr lt mx nc nl no nz pl pt
     ro ru se si sk sv th tr tw ua uk us/;
@@ -32,11 +34,11 @@ my @MX_CITIES;
 
 my $NEAREST;
 
-read_zone_file( $zone_file);
+read_zone_file($zone_file);
 my @DEB_CITIES;
 for my $deb (@DEB_CODES) {
     exists $CCODES->{$deb} or die "Missing code for deb country $deb";
-    push @DEB_CITIES, @{$CCODES->{$deb}};
+    push @DEB_CITIES, grep {$_->{tz} !~ /$IGNORE_DEB_TZ/} @{$CCODES->{$deb}};
 
     #$DEB_CITIES->{$deb} = $CCODES->{$deb};
 }
@@ -52,9 +54,7 @@ for my $mx (sort keys %$MX_TZ) {
     push @MX_CITIES, $entry;
 }
 
-#print Dumper @MX_CITIES;
-#exit;
-
+#print Dumper @DEB_CITIES; exit;
 
 for my $city (@CITIES) {
     my $min = 1000000;
