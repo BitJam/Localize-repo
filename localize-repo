@@ -531,7 +531,7 @@ get_codes() {
                       Asia/Tashkent) deb_code=cn ; mx_order=gr,nl,tw,ut,nz,la,ec ;;
                           Asia/Omsk) deb_code=ru ; mx_order=gr,nl,tw,ut,la,nz,ec ;;
                        Asia/Bishkek) deb_code=cn ; mx_order=gr,tw,nl,ut,nz,la,ec ;;
-                        Asia/Almaty) deb_code=cn ; mx_order=gr,tw,nl,ut,nz,la,ec ;;
+                        Asia/Almaty) deb_code=ru ; mx_order=gr,tw,nl,ut,nz,la,ec ;;
                        Asia/Colombo) deb_code=th ; mx_order=tw,gr,nl,nz,ut,la,ec ;;
                    Asia/Novosibirsk) deb_code=ru ; mx_order=tw,gr,nl,ut,la,nz,ec ;;
                        Asia/Barnaul) deb_code=ru ; mx_order=tw,gr,nl,ut,la,nz,ec ;;
