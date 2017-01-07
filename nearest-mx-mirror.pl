@@ -17,6 +17,10 @@ my @CITIES;
 my $CCODES;
 my $BY_TZ;
 
+my $DEB_EXCEPTIONS = {
+    "Asia/Almaty" => "ru"
+};
+
 my $MX_TZ = {
 
     GR => "Europe/Athens",
@@ -81,8 +85,10 @@ for my $city (@CITIES) {
         $min = $dist;
         $near = $deb;
     }
-
     $city->{deb} = $near->{code};
+    my $deb_exception = $DEB_EXCEPTIONS->{$city->{tz}};
+    $deb_exception and $city->{deb} = $deb_exception;
+
     #print "$near->{code}\n";
     #
     #printf "%4.2f %-30s %-30s %8.2f %8.2f %8.2f %8.2f\n", 
