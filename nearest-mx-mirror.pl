@@ -58,7 +58,7 @@ for my $mx (sort keys %$MX_TZ) {
     push @MX_CITIES, $entry;
 }
 
-#print Dumper @DEB_CITIES; exit;
+# print Dumper @DEB_CITIES; exit;
 
 for my $city (@CITIES) {
     my $min = 1000000;
@@ -146,8 +146,6 @@ sub line_to_entry {
     };
 
     return city_entry($1, $2, $3, $4);
-
-
 }
 
 sub city_entry {
