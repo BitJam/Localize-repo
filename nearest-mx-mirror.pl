@@ -135,61 +135,6 @@ sub read_zone_file {
         push @{$CCODES->{$code}}, $entry;
         $BY_TZ->{$entry->{tz}} = $entry;
     }
-
-sub xxxx {
-
-        m/^(\w{2})\t([+-]\d+)([+-]\d+)\t([\w\/]+)/ or do {
-            #print;
-            next;
-        };
-
-
-
-        my ($code, $lat, $lon, $tz) = ($1, $2, $3, $4);
-
-        my $lat_len = length $lat;
-        my $lon_len = length $lon;
-
-        if ($lat_len == 5) {
-            $lat /= 100;
-        }
-        elsif ($lat_len ==7) {
-            $lat /= 10000;
-        }
-        else {
-            die "Bad lat: $lat @ $tz"
-        }
-
-        if ($lon_len == 6) {
-            $lon /= 100;
-        }
-        elsif ($lon_len == 8) {
-            $lon /= 10000;
-        }
-        else {
-            die "Bad lon: $lon @ $tz"
-        }
-
-        $code =~ tr/A-Z/a-z/;
-        $code eq "gb" and $code = "uk";
-
-        my $region = $tz;
-        $region =~ s{/.*}{};
-
-        #print "$code $tz: $lat  $lon\n";
-        my $entry = {
-            code => $code,
-            lat  => pi() / 2 - $lat * pi() / 180,
-            lon  => $lon * pi() / 180,
-            latd => $lat,
-            lond => $lon,
-            tz   => $tz,
-            region => $region,
-        };
-
-        push @CITIES, $entry;
-        push @{$CCODES->{$code}}, $entry;
-    }
 }
 
 sub line_to_entry {
