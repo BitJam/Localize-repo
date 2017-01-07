@@ -23,6 +23,8 @@ my $DEB_EXCEPTIONS = {
 
 my $MX_TZ = {
 
+    DE => "Europe/Berlin",
+    FR => "Europe/Paris",
     GR => "Europe/Athens",
     EC => "America/Bogota",
     NZ => "Australia/Brisbane",
