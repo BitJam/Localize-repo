@@ -41,6 +41,8 @@ Here is what you do:
     ```
     ./nearest-mx-mirror-pl > case-code
     ```
+    NOTE: the `nearest-mx-mirror.pl` script requires the
+    `Math::Trig` Perl module.
 
 5. Replace the big case statement in localize-repo with the
    output you collected from `nearest-mx-repo.pl`
