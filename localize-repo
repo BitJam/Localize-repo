@@ -5,7 +5,7 @@ ME=${0##*/}
 ZDIR=/usr/share/zoneinfo
 SDIR=/etc/apt/sources.list.d
 
-MIRROR_PREFIXES="ec gr la nl nz ut tw"
+MIRROR_PREFIXES="de ec fr gr la nl nz ut tw"
 HOST_PREFIXES="$MIRROR_PREFIXES old_us"
 HOST_TYPES="AX MX MP"
 US_HOST_LIST="la ut"
