@@ -13,42 +13,51 @@ US_HOST_LIST="la ut"
 ut_AX_HOST=http://antix.daveserver.info
 ut_MP_HOST=http://mxrepo.com/mepiscr
 ut_MX_HOST=http://mxrepo.com/mx
+ut_LOCATION="Utah, USA"
 
 la_AX_HOST=http://iso.mxrepo.com/antix
 la_MP_HOST=http://iso.mxrepo.com/mepiscr
 la_MX_HOST=http://iso.mxrepo.com/mx
+la_LOCATION="Los Angeles, USA"
 
 gr_AX_HOST=http://ftp.cc.uoc.gr/mirrors/linux/mx/antix
 gr_MP_HOST=http://ftp.cc.uoc.gr/mirrors/linux/mx/mepiscr
 gr_MX_HOST=http://ftp.cc.uoc.gr/mirrors/linux/mx/mx
+gr_LOCATION="Greece"
 
 nl_AX_HOST=http://nl.mxrepo.com/antix
 nl_MP_HOST=http://nl.mxrepo.com/mepiscr
 nl_MX_HOST=http://nl.mxrepo.com/mx
+nl_LOCATION="The Netherlands"
 
 nz_AX_HOST=http://mx.debian.nz/antix
 nz_MP_HOST=http://mx.debian.nz/mepiscr
 nz_MX_HOST=http://mx.debian.nz/mx
+nz_LOCATION="New Zealand"
 
 ec_AX_HOST=http://mirror.cedia.org.ec/mx-workspace/antix
 ec_MP_HOST=http://mirror.cedia.org.ec/mx-workspace/mepiscr
 ec_MX_HOST=http://mirror.cedia.org.ec/mx-workspace/mx
+ec_LOCATION="Ecuador"
 
 tw_AX_HOST=http://ftp.yzu.edu.tw/Linux/mx-workspace/antix
 tw_MP_HOST=http://ftp.yzu.edu.tw/Linux/mx-workspace/mepiscr
 tw_MX_HOST=http://ftp.yzu.edu.tw/Linux/mx-workspace/mx
-
-old_us_AX_HOST=http://antix.daveserver.info
-old_us_MP_HOST=http://main.mepis-deb.org/mepiscr
-old_us_MX_HOST=http://main.mepis-deb.org/mx
+tw_LOCATION="Taiwan"
 
 de_AX_HOST=http://de.mirror.vinzv.de/mxlinux/packages/antix
 de_MP_HOST=http://de.mirror.vinzv.de/mxlinux/packages/mepiscr
 de_MX_HOST=http://de.mirror.vinzv.de/mxlinux/packages/mx
+de_LOCATION="Germany"
 
 fr_AX_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/antix
 fr_MP_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/mepiscr
 fr_MX_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/mx
+fr_LOCATION="France"
+
+old_us_AX_HOST=http://antix.daveserver.info
+old_us_MP_HOST=http://main.mepis-deb.org/mepiscr
+old_us_MX_HOST=http://main.mepis-deb.org/mx
 
 usage() {
     local ret=${1:-0}
@@ -69,6 +78,7 @@ Options:
                         given timezone
     -i --ignore=<list>  Comma delimited list of MX/antiX mirrors to ignore
                         Codes: $MIRROR_PREFIXES
+    -L --list           List all the mirror locations
     -p --pretend        Don't do anything just show what would be done
     -r --random         When a US city is closest, use any US mirror at random
     -q --quiet          Print less
@@ -79,7 +89,7 @@ Usage
 }
 
 main() {
-    local param val short_stack="cdhHipqrv"
+    local param val short_stack="cdhHiLpqrv"
     while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
         param=${1#-}
         shift
@@ -111,13 +121,23 @@ main() {
              -dir|d) SDIR=$val                         ;;
             -help|h) usage                             ;;
            -hosts|H) HOSTS_ONLY=true                   ;;
+            -list|L) LIST_MIRRORS=true                 ;;
          -pretend|p) PRETEND=true                      ;;
            -quiet|q) QUIET=true                        ;;
-          -random|r) RANDOMIZE=true                       ;;
+          -random|r) RANDOMIZE=true                    ;;
          -verbose|v) VERBOSE=true                      ;;
                   *) fatal "Unknown argument: -$param" ;;
         esac
     done
+
+    if [ "$LIST_MIRRORS" ]; then
+        if [ "$VERBOSE" ]; then
+            list_mirrors
+        else
+            list_mirror_codes
+        fi
+        exit 0
+    fi
 
     [ $# -lt 1 ] && usage
     [ $# -gt 1 ] && fatal "Only expected one command line argument"
@@ -292,6 +312,33 @@ vsay() {
 qsay() {
     [ "$QUIET" ] && return
     echo "$*"
+}
+
+list_mirrors() {
+    local pre ax_host mp_host mx_host location
+    for pre in  $MIRROR_PREFIXES; do
+        eval ax_host=\$${pre}_AX_HOST
+        eval mp_host=\$${pre}_MP_HOST
+        eval mx_host=\$${pre}_MX_HOST
+        eval location=\$${pre}_LOCATION
+
+        cat << List_Mirrors
+    Code: $pre
+Location: $location
+   antiX: $ax_host
+   Mepis: $mp_host
+      MX: $mx_host
+
+List_Mirrors
+    done
+}
+
+list_mirror_codes() {
+    local pre location
+    for pre in  $MIRROR_PREFIXES; do
+        eval location=\$${pre}_LOCATION
+        printf "%2s: %s\n" "$pre" "$location"
+    done
 }
 
 get_codes() {
