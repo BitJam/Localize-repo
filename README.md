@@ -14,16 +14,23 @@ Here is what you do:
 1. Choose a two-letter abbreviation for this mirror.  In this
    case we will use "fr".
 
-2. Add the three URLs to `localize-repo` using "fr" as a prefix for
-   the variable names:
+2. Add the abbreviation to the `MIRROR_PREFIXES` list in `localize_repo`
+
+    ```
+    MIRROR_PREFIXES="ec fr gr la nl nz ut tw"
+    ```
+
+3. Add the three URLs to `localize-repo` using "fr" as a prefix for
+   the variable names and add the country or location:
 
     ```
     fr_AX_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/antix
     fr_MP_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/mepiscr
     fr_MX_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/mx
+    fr_LOCATION="France"
     ```
 
-3. Add the mirror to the `MX_TZ` hash in `nearest-mx-mirror.pl`.
+4. Add the mirror to the `MX_TZ` hash in `nearest-mx-mirror.pl`.
    You need to select a "timezone" city.  They are all listed in
    the zone.tab file.
 
@@ -33,7 +40,7 @@ Here is what you do:
 
     Note that we used uppercase for the abbreviation here.
 
-4. Run `nearest-mx-mirror.pl` and collect the output.  The output
+5. Run `nearest-mx-mirror.pl` and collect the output.  The output
    will be a big case statement that will go into the
    `localize-repo` script, replacing the one that is already
    there:
@@ -44,10 +51,10 @@ Here is what you do:
     NOTE: the `nearest-mx-mirror.pl` script requires the
     `Math::Trig` Perl module.
 
-5. Replace the big case statement in localize-repo with the
+6. Replace the big case statement in localize-repo with the
    output you collected from `nearest-mx-repo.pl`
 
-6.  Check to make sure it is doing what you expect.  For example
+7.  Check to make sure it is doing what you expect.  For example
     try running:
 
     ```
