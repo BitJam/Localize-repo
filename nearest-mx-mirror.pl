@@ -31,6 +31,7 @@ my $MX_TZ = {
     LA => "America/Los_Angeles",
     UT => "America/New_York",
     NL => "Europe/Amsterdam",
+    SE => "Europe/Stockholm",
     TW => "Asia/Taipei",
 };
 

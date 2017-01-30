@@ -5,29 +5,59 @@ ME=${0##*/}
 ZDIR=/usr/share/zoneinfo
 SDIR=/etc/apt/sources.list.d
 
-HOST_PREFIXES="NL LA NZ UT OLD_US"
+MIRROR_PREFIXES="de ec fr gr la nl nz ut tw"
+HOST_PREFIXES="$MIRROR_PREFIXES old_us"
 HOST_TYPES="AX MX MP"
-US_HOST_LIST="LA UT"
+US_HOST_LIST="la ut"
 
-UT_AX_HOST=antix.daveserver.info
-UT_MP_HOST=mxrepo.com/mepiscr
-UT_MX_HOST=mxrepo.com/mx
+ut_AX_HOST=http://antix.daveserver.info
+ut_MP_HOST=http://mxrepo.com/mepiscr
+ut_MX_HOST=http://mxrepo.com/mx
+ut_LOCATION="Utah, USA"
 
-LA_AX_HOST=iso.mxrepo.com/antix
-LA_MP_HOST=iso.mxrepo.com/mepiscr
-LA_MX_HOST=iso.mxrepo.com/mx
+la_AX_HOST=http://iso.mxrepo.com/antix
+la_MP_HOST=http://iso.mxrepo.com/mepiscr
+la_MX_HOST=http://iso.mxrepo.com/mx
+la_LOCATION="Los Angeles, USA"
 
-NL_AX_HOST=nl.mxrepo.com/antix
-NL_MP_HOST=nl.mxrepo.com/mepiscr
-NL_MX_HOST=nl.mxrepo.com/mx
+gr_AX_HOST=http://ftp.cc.uoc.gr/mirrors/linux/mx/antix
+gr_MP_HOST=http://ftp.cc.uoc.gr/mirrors/linux/mx/mepiscr
+gr_MX_HOST=http://ftp.cc.uoc.gr/mirrors/linux/mx/mx
+gr_LOCATION="Greece"
 
-NZ_AX_HOST=mx.debian.nz/antix
-NZ_MP_HOST=mx.debian.nz/mepiscr
-NZ_MX_HOST=mx.debian.nz/mx
+nl_AX_HOST=http://nl.mxrepo.com/antix
+nl_MP_HOST=http://nl.mxrepo.com/mepiscr
+nl_MX_HOST=http://nl.mxrepo.com/mx
+nl_LOCATION="The Netherlands"
 
-OLD_US_AX_HOST=antix.daveserver.info
-OLD_US_MP_HOST=main.mepis-deb.org/mepiscr
-OLD_US_MX_HOST=main.mepis-deb.org/mx
+nz_AX_HOST=http://mx.debian.nz/antix
+nz_MP_HOST=http://mx.debian.nz/mepiscr
+nz_MX_HOST=http://mx.debian.nz/mx
+nz_LOCATION="New Zealand"
+
+ec_AX_HOST=http://mirror.cedia.org.ec/mx-workspace/antix
+ec_MP_HOST=http://mirror.cedia.org.ec/mx-workspace/mepiscr
+ec_MX_HOST=http://mirror.cedia.org.ec/mx-workspace/mx
+ec_LOCATION="Ecuador"
+
+tw_AX_HOST=http://ftp.yzu.edu.tw/Linux/mx-workspace/antix
+tw_MP_HOST=http://ftp.yzu.edu.tw/Linux/mx-workspace/mepiscr
+tw_MX_HOST=http://ftp.yzu.edu.tw/Linux/mx-workspace/mx
+tw_LOCATION="Taiwan"
+
+de_AX_HOST=http://de.mirror.vinzv.de/mxlinux/packages/antix
+de_MP_HOST=http://de.mirror.vinzv.de/mxlinux/packages/mepiscr
+de_MX_HOST=http://de.mirror.vinzv.de/mxlinux/packages/mx
+de_LOCATION="Germany"
+
+fr_AX_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/antix
+fr_MP_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/mepiscr
+fr_MX_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/mx
+fr_LOCATION="France"
+
+old_us_AX_HOST=http://antix.daveserver.info
+old_us_MP_HOST=http://main.mepis-deb.org/mepiscr
+old_us_MX_HOST=http://main.mepis-deb.org/mx
 
 usage() {
     local ret=${1:-0}
@@ -40,22 +70,26 @@ country code.  If "default" is given then use the timezone
 in the /etc/timezone file.
 
 Options:
-    -c --codes      Only display codes for the servers that would
-                    be used for the given timezone
-    -d --dir=<dir>  Use <dir> instead of $SDIR
-    -h --help       Show this help
-    -H --hosts      Only show the hosts that would be used for the
-                    given timezone
-    -p --pretend    Don't do anything just show what would be done
-    -q --quiet      Print less
-    -v --verbose    Print more
+    -c --codes          Only display codes for the servers that would
+                        be used for the given timezone
+    -d --dir=<dir>      Use <dir> instead of $SDIR
+    -h --help           Show this help
+    -H --hosts          Only show the hosts that would be used for the
+                        given timezone
+    -i --ignore=<list>  Comma delimited list of MX/antiX mirrors to ignore
+                        Codes: $MIRROR_PREFIXES
+    -L --list           List all the mirror locations
+    -p --pretend        Don't do anything just show what would be done
+    -r --random         When a US city is closest, use any US mirror at random
+    -q --quiet          Print less
+    -v --verbose        Print more
 Usage
 
     exit $ret
 }
 
 main() {
-    local param val short_stack="cdhHpqv"
+    local param val short_stack="cdhHiLpqrv"
     while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
         param=${1#-}
         shift
@@ -69,7 +103,7 @@ main() {
         esac
 
         case $param in
-          -dir|d) [ $# -lt 1 ] && fatal "Expected a parameter after: -$param"
+          -dir|-ignore|[di]) [ $# -lt 1 ] && fatal "Expected a parameter after: -$param"
                     val=$1
                     [ -n "$val" -a -z "${val##-*}" ] \
                         && fatal "Suspicious parameter after -$param: $val"
@@ -80,17 +114,30 @@ main() {
         esac
 
         case $param in
+          -ignore|i) IGNORE=$val                       ;;
+      -ignore=*|i=*) IGNORE=$val                       ;;
            -codes|c) CODES_ONLY=true                   ;;
          -dir=*|d=*) SDIR=$val                         ;;
              -dir|d) SDIR=$val                         ;;
             -help|h) usage                             ;;
            -hosts|H) HOSTS_ONLY=true                   ;;
+            -list|L) LIST_MIRRORS=true                 ;;
          -pretend|p) PRETEND=true                      ;;
            -quiet|q) QUIET=true                        ;;
+          -random|r) RANDOMIZE=true                    ;;
          -verbose|v) VERBOSE=true                      ;;
                   *) fatal "Unknown argument: -$param" ;;
         esac
     done
+
+    if [ "$LIST_MIRRORS" ]; then
+        if [ "$VERBOSE" ]; then
+            list_mirrors
+        else
+            list_mirror_codes
+        fi
+        exit 0
+    fi
 
     [ $# -lt 1 ] && usage
     [ $# -gt 1 ] && fatal "Only expected one command line argument"
@@ -110,27 +157,40 @@ main() {
 
     [ ${#tz} -lt 1 ] && fatal "Timezone or country code too short: $tz"
 
-    find_zonetab_file || fatal "Could not find zone.tab file"
-
     case $tz in
         [a-zA-Z][a-zA-Z]) country_code_to_timezone $tz
                           tz=$NEW_TZ ;;
     esac
 
-    local mx_ax_code=$(mx_ax_code $tz)
-    local   deb_code=$(deb_code   $tz)
+    local deb_code mx_order
+    get_codes $tz
+
     vsay "deb mirror: $deb_code"
-    [ ${#deb_code} -eq 0 ]   && fatal "No country code found for timezone: $tz"
-    [ ${#mx_ax_code} -eq 0 ] && fatal "No MX/antiX mirrors found for timezone: $tz"
+    [ ${#deb_code} -eq 0 ] && fatal "No country code found for timezone: $tz"
+    [ ${#mx_order} -eq 0 ] && fatal "No MX/antiX mirrors found for timezone: $tz"
 
-    [ "$CODES_ONLY" ] && echo -e "MX/aX code: $mx_ax_code\n  Deb code: $deb_code"
+    [ "$CODES_ONLY" ] && echo -e "MX/aX code: $mx_order\n  Deb code: $deb_code"
 
-    [ "$mx_ax_code" = "US"  ] && assign_random_server "US" $US_HOST_LIST
+    if [ ${#IGNORE} -gt 0 ]; then
+        bl_regex=${IGNORE//,/|}
+        # Remove blacklisted codes and leading commas
+        mx_order=$(echo $mx_order         | sed -r -e "s/\<($bl_regex)\>//g" -e "s/^,+//" )
+        US_HOST_LIST=$(echo $US_HOST_LIST | sed -r -e "s/\<($bl_regex)\>//g" -e "s/^,+//" )
+    fi
+
+    # Remove the first comma and everything after it
+    local mx_code=${mx_order%%,*}
+
+    if [ "$RANDOMIZE" ]; then
+        case $mx_code in 
+            la|ut) mx_code=$(random_element $US_HOST_LIST) ;;
+        esac
+    fi
 
     if [ "$HOSTS_ONLY" ]; then
         local type host
         for type in $HOST_TYPES; do
-            eval host=\$${mx_ax_code}_${type}_HOST
+            eval host=\$${mx_code}_${type}_HOST
             echo " $type: $host"
         done
         echo "deb: ftp.$deb_code.debian.org/debian"
@@ -143,7 +203,7 @@ main() {
     SED_EXPR="-e /ftp\.$deb_code\.debian\.org/!s=(http://ftp\.)[a-z][a-z](\.debian.org/debian/)=\1$deb_code\2="
     SED_EXPR_P="${SED_EXPR}p"
 
-    assign_exprs $mx_ax_code
+    assign_exprs $mx_code
 
     [ -d "$SDIR" ] || fatal "'$SDIR' is not a directory"
 
@@ -183,31 +243,20 @@ assign_exprs() {
             ohost_list=$ohost_list${ohost_list:+|}$ohost
         done
         ohost_list=$(echo $ohost_list | sed 's/\./\\\./g')
-        local sed="s=(http://)($ohost_list)(/)=\1$host\3="
+        local sed="s=($ohost_list)/=$host/="
         #echo SED_$type=$sed
         SED_EXPR="$SED_EXPR -e $sed"
         SED_EXPR_P="$SED_EXPR_P -e ${sed}p"
     done
 }
-
-# Assign random servers for all types based on prefixes.  The first
-# arg is the prefix of the target string.  The remaining args are
-# the prefixes of the strings we are assigning from.  You can get
-# rough weighting by repeating prefixes.
-assign_random_server() {
-    local targ=$1  prefix  type
-    shift
-
+# Output one of the input arguments at random
+random_element() {
     local cnt=$#
     local rand=$(($RANDOM % cnt))
     shift $rand
-    prefix=$1
-
-    for type in $HOST_TYPES; do
-        #echo ${targ}_${type}_HOST=\$${prefix}_${type}_HOST
-        eval ${targ}_${type}_HOST=\$${prefix}_${type}_HOST
-    done
+    echo $1
 }
+
 
 find_zonetab_file() {
     local z dir=${1:-$ZDIR}
@@ -221,193 +270,6 @@ find_zonetab_file() {
     return 1
 }
 
-mx_ax_code() {
-    local tz=$1
-
-    case $tz in
-#        Asia/Colombo)                    echo NZ ;;
-#        Asia/Novosibirsk)                echo NZ ;;
-#        Asia/Kathmandu)                  echo NZ ;;
-#        Asia/Novokuznetsk)               echo NZ ;;
-#        Asia/Urumqi)                     echo NZ ;;
-#        Asia/Kolkata)                    echo NZ ;;
-#        Asia/Thimphu)                    echo NZ ;;
-#        Asia/Dhaka)                      echo NZ ;;
-#        Asia/Hovd)                       echo NZ ;;
-#        Asia/Krasnoyarsk)                echo NZ ;;
-#        Asia/Rangoon)                    echo NZ ;;
-#        Indian/Cocos)                    echo NZ ;;
-#        Asia/Bangkok)                    echo NZ ;;
-#        Asia/Kuala_Lumpur)               echo NZ ;;
-#        Asia/Vientiane)                  echo NZ ;;
-#        Asia/Singapore)                  echo NZ ;;
-#        Asia/Irkutsk)                    echo NZ ;;
-#        Asia/Phnom_Penh)                 echo NZ ;;
-#        Indian/Christmas)                echo NZ ;;
-#        Asia/Ho_Chi_Minh)                echo NZ ;;
-#        Asia/Jakarta)                    echo NZ ;;
-#        Asia/Ulaanbaatar)                echo NZ ;;
-#        Asia/Pontianak)                  echo NZ ;;
-#        Asia/Kuching)                    echo NZ ;;
-#        Asia/Chita)                      echo NZ ;;
-#        Asia/Macau)                      echo NZ ;;
-#        Asia/Hong_Kong)                  echo NZ ;;
-#        Asia/Choibalsan)                 echo NZ ;;
-#        Asia/Brunei)                     echo NZ ;;
-#        Australia/Perth)                 echo NZ ;;
-#        Asia/Makassar)                   echo NZ ;;
-#        Asia/Manila)                     echo NZ ;;
-#        Asia/Shanghai)                   echo NZ ;;
-#        Asia/Taipei)                     echo NZ ;;
-#        Asia/Dili)                       echo NZ ;;
-#        Asia/Pyongyang)                  echo NZ ;;
-#        Asia/Seoul)                      echo NZ ;;
-#        Australia/Eucla)                 echo NZ ;;
-#        Asia/Yakutsk)                    echo NZ ;;
-#        Australia/Darwin)                echo NZ ;;
-#        Asia/Vladivostok)                echo NZ ;;
-#        Pacific/Palau)                   echo NZ ;;
-#        Asia/Khandyga)                   echo NZ ;;
-#        Australia/Adelaide)              echo NZ ;;
-#        Asia/Tokyo)                      echo NZ ;;
-#        Asia/Jayapura)                   echo NZ ;;
-#        Australia/Broken_Hill)           echo NZ ;;
-#        Asia/Sakhalin)                   echo NZ ;;
-#        Asia/Ust)                        echo NZ ;;
-#        Australia/Currie)                echo NZ ;;
-#        Pacific/Guam)                    echo NZ ;;
-#        Australia/Melbourne)             echo NZ ;;
-#        Pacific/Saipan)                  echo NZ ;;
-#        Pacific/Port_Moresby)            echo NZ ;;
-#        Australia/Hobart)                echo NZ ;;
-#        Australia/Lindeman)              echo NZ ;;
-#        Asia/Magadan)                    echo NZ ;;
-#        Australia/Sydney)                echo NZ ;;
-#        Pacific/Chuuk)                   echo NZ ;;
-#        Australia/Brisbane)              echo NZ ;;
-#        Asia/Srednekolymsk)              echo NZ ;;
-#        Pacific/Bougainville)            echo NZ ;;
-#        Pacific/Pohnpei)                 echo NZ ;;
-#        Asia/Kamchatka)                  echo NZ ;;
-#        Australia/Lord_Howe)             echo NZ ;;
-#        Pacific/Guadalcanal)             echo NZ ;;
-#        Pacific/Kosrae)                  echo NZ ;;
-#        Pacific/Noumea)                  echo NZ ;;
-#        Pacific/Wake)                    echo NZ ;;
-#        Pacific/Nauru)                   echo NZ ;;
-#        Pacific/Kwajalein)               echo NZ ;;
-#        Pacific/Norfolk)                 echo NZ ;;
-#        Pacific/Efate)                   echo NZ ;;
-#        Pacific/Majuro)                  echo NZ ;;
-#        Pacific/Tarawa)                  echo NZ ;;
-#        Pacific/Auckland)                echo NZ ;;
-#        Asia/Anadyr)                     echo NZ ;;
-#        Pacific/Fiji)                    echo NZ ;;
-#        Pacific/Funafuti)                echo NZ ;;
-
-#        America/Antigua)                 echo EC ;;
-#        America/Anguilla)                echo EC ;;
-#        America/Argentina/Buenos_Aires)  echo EC ;;
-#        America/Argentina/Cordoba)       echo EC ;;
-#        America/Argentina/Salta)         echo EC ;;
-#        America/Argentina/Jujuy)         echo EC ;;
-#        America/Argentina/Tucuman)       echo EC ;;
-#        America/Argentina/Catamarca)     echo EC ;;
-#        America/Argentina/La_Rioja)      echo EC ;;
-#        America/Argentina/San_Juan)      echo EC ;;
-#        America/Argentina/Mendoza)       echo EC ;;
-#        America/Argentina/San_Luis)      echo EC ;;
-#        America/Argentina/Rio_Gallegos)  echo EC ;;
-#        America/Argentina/Ushuaia)       echo EC ;;
-#        America/Aruba)                   echo EC ;;
-#        America/Barbados)                echo EC ;;
-#        America/St_Barthelemy)           echo EC ;;
-#        America/La_Paz)                  echo EC ;;
-#        America/Kralendijk)              echo EC ;;
-#        America/Noronha)                 echo EC ;;
-#        America/Belem)                   echo EC ;;
-#        America/Fortaleza)               echo EC ;;
-#        America/Recife)                  echo EC ;;
-#        America/Araguaina)               echo EC ;;
-#        America/Maceio)                  echo EC ;;
-#        America/Bahia)                   echo EC ;;
-#        America/Sao_Paulo)               echo EC ;;
-#        America/Campo_Grande)            echo EC ;;
-#        America/Cuiaba)                  echo EC ;;
-#        America/Santarem)                echo EC ;;
-#        America/Porto_Velho)             echo EC ;;
-#        America/Boa_Vista)               echo EC ;;
-#        America/Manaus)                  echo EC ;;
-#        America/Eirunepe)                echo EC ;;
-#        America/Rio_Branco)              echo EC ;;
-#        America/Belize)                  echo EC ;;
-#        America/Santiago)                echo EC ;;
-#        America/Bogota)                  echo EC ;;
-#        America/Costa_Rica)              echo EC ;;
-#        America/Curacao)                 echo EC ;;
-#        America/Dominica)                echo EC ;;
-#        America/Santo_Domingo)           echo EC ;;
-#        America/Guayaquil)               echo EC ;;
-#        America/Grenada)                 echo EC ;;
-#        America/Cayenne)                 echo EC ;;
-#        America/Guadeloupe)              echo EC ;;
-#        America/Guatemala)               echo EC ;;
-#        America/Guyana)                  echo EC ;;
-#        America/Tegucigalpa)             echo EC ;;
-#        America/Port)                    echo EC ;;
-#        America/Jamaica)                 echo EC ;;
-#        America/St_Kitts)                echo EC ;;
-#        America/Cayman)                  echo EC ;;
-#        America/St_Lucia)                echo EC ;;
-#        America/Marigot)                 echo EC ;;
-#        America/Martinique)              echo EC ;;
-#        America/Montserrat)              echo EC ;;
-#        America/Mexico_City)             echo EC ;;
-#        America/Managua)                 echo EC ;;
-#        America/Panama)                  echo EC ;;
-#        America/Lima)                    echo EC ;;
-#        America/Puerto_Rico)             echo EC ;;
-#        America/Asuncion)                echo EC ;;
-#        America/Paramaribo)              echo EC ;;
-#        America/El_Salvador)             echo EC ;;
-#        America/Lower_Princes)           echo EC ;;
-#        America/Port_of_Spain)           echo EC ;;
-#        America/Montevideo)              echo EC ;;
-#        America/St_Vincent)              echo EC ;;
-#        America/Caracas)                 echo EC ;;
-#        America/Tortola)                 echo EC ;;
-#        America/St_Thomas)               echo EC ;;
-
-        America/*)                       echo US ;;
-        Antarctica/*)                    echo US ;;
-        Atlantic/*)                      echo US ;;
-        Australia/*)                     echo US ;;
-
-        Africa/*)                        echo NL ;;
-        Arctic/*)                        echo NL ;;
-        Europe/*)                        echo NL ;;
-
-        Asia/*)      mx_ax_code_by_longitude $tz ;;
-        Indian/*)    mx_ax_code_by_longitude $tz ;;
-        Pacific/*)   mx_ax_code_by_longitude $tz ;;
-    esac
-}
-
-mx_ax_code_by_longitude() {
-    local tz=$1
-    local long=$(tz_to_long $tz)
-    if [ -z "$long" ]; then
-        error "No longitude found for timezone: $tz"
-        return 2
-    fi
-    if [ $long -gt -40 -a $long -lt 90 ]; then
-        echo NL
-    else
-        echo US
-    fi
-    return 0
-}
-
 country_code_to_timezone() {
     local ccode=$1
 
@@ -415,100 +277,16 @@ country_code_to_timezone() {
         uk) ccode=gb ;;
     esac
 
+    find_zonetab_file || fatal "Could not find zone.tab file"
+
     NEW_TZ=$(ccode_to_tz $ccode)
     [ -z "$NEW_TZ" ] && fatal "Could not find a timezone for country: $ccode"
     vsay "Found timezone: $NEW_TZ for country code: $ccode"
 }
 
-deb_code() {
-    local tz=$1
-    local ccode=$(tz_to_ccode $tz)
-    if [ -z "$ccode" ]; then
-        return 2
-    fi
-
-    # Note: most of the case statement was created by deb-mirror-by-tz.pl
-    case $ccode in
-                                         gb) ccode=uk;;
-
-                                         at) ccode=at;;
-                          aq|au|cx|mu|re|tf) ccode=au;;
-                                      be|lu) ccode=be;;
-                                al|bg|me|mk) ccode=bg;;
-        ag|ai|ao|aw|bb|bl|bo|bq|br|bw|ci|co) ccode=br;;
-        cw|dm|ec|gd|gf|gn|gp|gy|kn|lc|lr|ls) ccode=br;;
-        mf|mq|ms|na|pe|pr|py|sl|sr|sx|tt|vc) ccode=br;;
-                                ve|vg|vi|za) ccode=br;;
-                                         by) ccode=by;;
-                                   ca|gl|pm) ccode=ca;;
-                                   ch|li|mc) ccode=ch;;
-                          ar|cl|ec|pf|pn|uy) ccode=cl;;
-                       bt|cn|kg|kz|mn|np|uz) ccode=cn;;
-                                         cz) ccode=cz;;
-                                         de) ccode=de;;
-                                         dk) ccode=dk;;
-                                         ee) ccode=ee;;
-                                   ad|dz|es) ccode=es;;
-                                       "fi") ccode=fi;;
-                                         fr) ccode=fr;;
-        bi|cd|cf|cg|cm|eg|ga|gq|gr|rw|sd|ss) ccode=gr;;
-                             sz|td|ug|zm|zw) ccode=gr;;
-                                hk|mo|ph|tl) ccode=hk;;
-                                      ba|hr) ccode=hr;;
-                                      hu|rs) ccode=hu;;
-                                      ie|im) ccode=ie;;
-        ae|af|am|az|bh|cy|dj|er|et|ge|il|iq) ccode=ir;;
-        ir|jo|ke|km|kw|kz|lb|mg|mw|mz|om|pk) ccode=ir;;
-        ps|qa|sa|sc|so|sy|tj|tm|tz|uz|ye|yt) ccode=ir;;
-                                   fo|is|sj) ccode=is;;
-                          it|ly|mt|sm|tn|va) ccode=it;;
-                                         jp) ccode=jp;;
-                                      kp|kr) ccode=kr;;
-                                      lt|lv) ccode=lt;;
-                 bs|bz|cu|do|ht|jm|ky|mx|tc) ccode=mx;;
-        as|fj|fm|gu|ki|mh|mp|nc|nf|nr|pg|pw) ccode=nc;;
-                       sb|tk|to|tv|vu|wf|ws) ccode=nc;;
-                                         nl) ccode=nl;;
-                                         no) ccode=no;;
-                                ck|nu|nz|pf) ccode=nz;;
-                                         pl) ccode=pl;;
-        bf|bj|bm|cv|eh|fk|gh|gi|gm|gs|gw|ma) ccode=pt;;
-                 ml|mr|ne|ng|pt|sh|sn|st|tg) ccode=pt;;
-                                      md|ro) ccode=ro;;
-                                   kz|mn|ru) ccode=ru;;
-                                      ax|se) ccode=se;;
-                                         si) ccode=si;;
-                                         sk) ccode=sk;;
-                          cr|gt|hn|ni|pa|sv) ccode=sv;;
-        bd|bn|cc|id|in|io|kh|la|lk|mm|mv|my) ccode=th;;
-                                   sg|th|vn) ccode=th;;
-                                         tr) ccode=tr;;
-                                      id|tw) ccode=tw;;
-                                         ua) ccode=ua;;
-                                   uk|gg|je) ccode=uk;;
-                                   ki|um|us) ccode=us;;
-
-                                          *) fatal "Unknown country code: $ccode"
-                                             ccode=us;;
-    esac
-
-    echo $ccode
-    return 0
-}
-
-tz_to_ccode() {
-    local tz=$1
-    cut -s -f1,3 $ZONE_TAB | grep "\s$tz$" | cut -f1 | tr '[A-Z]' '[a-z]'
-}
-
 ccode_to_tz() {
     local code=$1
     cut -s -f1,3 $ZONE_TAB | grep -i "^$code\s" | head -n1 | cut -f2
-}
-
-tz_to_long() {
-    local tz=$1
-    cut -s -f2,3 $ZONE_TAB | grep "\s$tz$" | sed -r 's/.*[0-9]([+-][0-9][0-9][0-9])[0-9]*.*/\1/'
 }
 
 error() {
@@ -536,5 +314,456 @@ qsay() {
     echo "$*"
 }
 
+list_mirrors() {
+    local pre ax_host mp_host mx_host location
+    for pre in  $MIRROR_PREFIXES; do
+        eval ax_host=\$${pre}_AX_HOST
+        eval mp_host=\$${pre}_MP_HOST
+        eval mx_host=\$${pre}_MX_HOST
+        eval location=\$${pre}_LOCATION
+
+        cat << List_Mirrors
+    Code: $pre
+Location: $location
+   antiX: $ax_host
+   Mepis: $mp_host
+      MX: $mx_host
+
+List_Mirrors
+    done
+}
+
+list_mirror_codes() {
+    local pre location
+    for pre in  $MIRROR_PREFIXES; do
+        eval location=\$${pre}_LOCATION
+        printf "%2s: %s\n" "$pre" "$location"
+    done
+}
+
+get_codes() {
+    local tz=$1
+    case $tz in
+                       Africa/Dakar) deb_code=pt ; mx_order=fr,nl,gr,de,ut,ec,la,tw,nz ;;
+                      Africa/Banjul) deb_code=pt ; mx_order=fr,nl,gr,de,ut,ec,la,tw,nz ;;
+                  Africa/Nouakchott) deb_code=pt ; mx_order=fr,nl,gr,de,ut,ec,la,tw,nz ;;
+                      Africa/Bissau) deb_code=pt ; mx_order=fr,gr,nl,de,ec,ut,la,tw,nz ;;
+                     Africa/Conakry) deb_code=br ; mx_order=fr,gr,nl,de,ec,ut,la,tw,nz ;;
+                    Africa/Freetown) deb_code=br ; mx_order=fr,gr,nl,de,ec,ut,la,tw,nz ;;
+                    Africa/El_Aaiun) deb_code=pt ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                    Africa/Monrovia) deb_code=br ; mx_order=fr,gr,nl,de,ec,ut,la,tw,nz ;;
+                      Africa/Bamako) deb_code=pt ; mx_order=fr,gr,nl,de,ut,ec,la,tw,nz ;;
+                  Africa/Casablanca) deb_code=pt ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                       Africa/Ceuta) deb_code=pt ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                     Africa/Abidjan) deb_code=br ; mx_order=gr,fr,nl,de,ec,ut,la,tw,nz ;;
+                 Africa/Ouagadougou) deb_code=pt ; mx_order=gr,fr,nl,de,ut,ec,la,tw,nz ;;
+                       Africa/Accra) deb_code=pt ; mx_order=gr,fr,nl,de,ec,ut,la,tw,nz ;;
+                        Africa/Lome) deb_code=pt ; mx_order=gr,fr,nl,de,ut,ec,la,tw,nz ;;
+                      Africa/Niamey) deb_code=pt ; mx_order=gr,fr,nl,de,ut,ec,la,tw,nz ;;
+                       Africa/Porto) deb_code=pt ; mx_order=gr,fr,nl,de,ut,ec,la,tw,nz ;;
+                     Africa/Algiers) deb_code=es ; mx_order=fr,nl,gr,de,ut,ec,la,tw,nz ;;
+                       Africa/Lagos) deb_code=pt ; mx_order=gr,fr,nl,de,ut,ec,la,tw,nz ;;
+                    Africa/Sao_Tome) deb_code=pt ; mx_order=gr,fr,nl,de,ec,ut,tw,la,nz ;;
+                      Africa/Malabo) deb_code=gr ; mx_order=gr,fr,nl,de,ut,ec,tw,la,nz ;;
+                  Africa/Libreville) deb_code=gr ; mx_order=gr,fr,nl,de,ec,ut,tw,la,nz ;;
+                      Africa/Douala) deb_code=gr ; mx_order=gr,fr,nl,de,ut,ec,tw,la,nz ;;
+                       Africa/Tunis) deb_code=it ; mx_order=gr,fr,de,nl,ut,ec,tw,la,nz ;;
+                     Africa/Tripoli) deb_code=it ; mx_order=gr,fr,de,nl,ut,ec,tw,la,nz ;;
+                      Africa/Luanda) deb_code=br ; mx_order=gr,fr,de,nl,ec,ut,tw,nz,la ;;
+                    Africa/Ndjamena) deb_code=gr ; mx_order=gr,fr,de,nl,ut,ec,tw,la,nz ;;
+                 Africa/Brazzaville) deb_code=gr ; mx_order=gr,fr,de,nl,ec,ut,tw,la,nz ;;
+                    Africa/Kinshasa) deb_code=gr ; mx_order=gr,fr,de,nl,ec,ut,tw,la,nz ;;
+                    Africa/Windhoek) deb_code=br ; mx_order=gr,fr,de,nl,ec,ut,tw,nz,la ;;
+                      Africa/Bangui) deb_code=gr ; mx_order=gr,fr,de,nl,ut,ec,tw,la,nz ;;
+                    Africa/Gaborone) deb_code=br ; mx_order=gr,fr,de,nl,ec,tw,nz,ut,la ;;
+                  Africa/Lubumbashi) deb_code=gr ; mx_order=gr,fr,de,nl,tw,ec,ut,nz,la ;;
+                      Africa/Maseru) deb_code=br ; mx_order=gr,fr,de,nl,ec,nz,tw,ut,la ;;
+                Africa/Johannesburg) deb_code=br ; mx_order=gr,fr,de,nl,ec,tw,nz,ut,la ;;
+                      Africa/Lusaka) deb_code=gr ; mx_order=gr,fr,de,nl,tw,ec,ut,nz,la ;;
+                   Africa/Bujumbura) deb_code=gr ; mx_order=gr,fr,de,nl,tw,ut,ec,nz,la ;;
+                      Africa/Kigali) deb_code=gr ; mx_order=gr,fr,de,nl,tw,ut,ec,nz,la ;;
+                      Africa/Harare) deb_code=gr ; mx_order=gr,fr,de,nl,tw,ec,nz,ut,la ;;
+                     Africa/Mbabane) deb_code=gr ; mx_order=gr,fr,de,nl,tw,nz,ec,ut,la ;;
+                       Africa/Cairo) deb_code=gr ; mx_order=gr,de,fr,nl,tw,ut,ec,la,nz ;;
+                        Africa/Juba) deb_code=gr ; mx_order=gr,de,fr,nl,tw,ut,ec,nz,la ;;
+                     Africa/Kampala) deb_code=gr ; mx_order=gr,de,fr,nl,tw,ut,ec,nz,la ;;
+                    Africa/Khartoum) deb_code=gr ; mx_order=gr,de,fr,nl,tw,ut,ec,la,nz ;;
+                      Africa/Maputo) deb_code=ir ; mx_order=gr,fr,de,nl,tw,nz,ec,ut,la ;;
+                    Africa/Blantyre) deb_code=ir ; mx_order=gr,fr,de,nl,tw,nz,ec,ut,la ;;
+                     Africa/Nairobi) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,nz,la ;;
+                 Africa/Addis_Ababa) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,nz,la ;;
+                      Africa/Asmara) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,nz,la ;;
+               Africa/Dar_es_Salaam) deb_code=ir ; mx_order=gr,de,fr,nl,tw,nz,ut,ec,la ;;
+                    Africa/Djibouti) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,nz,ec,la ;;
+                   Africa/Mogadishu) deb_code=ir ; mx_order=gr,de,fr,nl,tw,nz,ut,ec,la ;;
+                       America/Adak) deb_code=us ; mx_order=la,tw,ut,de,nl,fr,nz,gr,ec ;;
+                       America/Nome) deb_code=us ; mx_order=la,ut,tw,nl,de,fr,gr,ec,nz ;;
+                  America/Anchorage) deb_code=us ; mx_order=la,ut,nl,de,tw,fr,ec,gr,nz ;;
+                    America/Yakutat) deb_code=us ; mx_order=la,ut,nl,de,fr,tw,ec,gr,nz ;;
+                     America/Dawson) deb_code=ca ; mx_order=la,ut,nl,de,fr,tw,ec,gr,nz ;;
+                      America/Sitka) deb_code=us ; mx_order=la,ut,nl,de,fr,ec,tw,gr,nz ;;
+                 America/Whitehorse) deb_code=ca ; mx_order=la,ut,nl,de,fr,ec,tw,gr,nz ;;
+                     America/Juneau) deb_code=us ; mx_order=la,ut,nl,de,fr,ec,tw,gr,nz ;;
+                     America/Inuvik) deb_code=ca ; mx_order=la,ut,nl,de,fr,tw,gr,ec,nz ;;
+                 America/Metlakatla) deb_code=us ; mx_order=la,ut,nl,ec,de,fr,tw,gr,nz ;;
+                  America/Vancouver) deb_code=ca ; mx_order=la,ut,ec,nl,fr,de,tw,gr,nz ;;
+                America/Fort_Nelson) deb_code=ca ; mx_order=la,ut,nl,de,fr,ec,gr,tw,nz ;;
+               America/Dawson_Creek) deb_code=ca ; mx_order=la,ut,nl,de,fr,ec,gr,tw,nz ;;
+                America/Los_Angeles) deb_code=us ; mx_order=la,ut,ec,nl,fr,de,tw,gr,nz ;;
+                    America/Tijuana) deb_code=mx ; mx_order=la,ut,ec,nl,fr,de,tw,gr,nz ;;
+                    America/Creston) deb_code=ca ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+                      America/Boise) deb_code=us ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+                America/Yellowknife) deb_code=ca ; mx_order=la,ut,nl,de,fr,ec,gr,tw,nz ;;
+                   America/Edmonton) deb_code=ca ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+                    America/Phoenix) deb_code=us ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+                 America/Hermosillo) deb_code=mx ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+              America/Swift_Current) deb_code=ca ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+                   America/Mazatlan) deb_code=mx ; mx_order=la,ut,ec,nl,fr,de,gr,nz,tw ;;
+                  America/Chihuahua) deb_code=mx ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+             America/Bahia_Banderas) deb_code=mx ; mx_order=la,ut,ec,nl,fr,de,gr,nz,tw ;;
+              America/Cambridge_Bay) deb_code=ca ; mx_order=ut,la,nl,de,fr,gr,ec,tw,nz ;;
+                     America/Denver) deb_code=us ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+                     America/Regina) deb_code=ca ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+                    America/Ojinaga) deb_code=mx ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+        America/North_Dakota/Beulah) deb_code=us ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+     America/North_Dakota/New_Salem) deb_code=us ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+        America/North_Dakota/Center) deb_code=us ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+                  America/Monterrey) deb_code=mx ; mx_order=la,ut,ec,nl,fr,de,gr,nz,tw ;;
+                America/Mexico_City) deb_code=mx ; mx_order=la,ec,ut,fr,nl,de,gr,nz,tw ;;
+                  America/Matamoros) deb_code=mx ; mx_order=la,ut,ec,nl,fr,de,gr,tw,nz ;;
+                   America/Winnipeg) deb_code=ca ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                   America/Resolute) deb_code=ca ; mx_order=ut,la,nl,de,fr,gr,ec,tw,nz ;;
+                America/Rainy_River) deb_code=ca ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+               America/Rankin_Inlet) deb_code=ca ; mx_order=ut,la,nl,fr,de,ec,gr,tw,nz ;;
+                   America/Atikokan) deb_code=ca ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                  America/Guatemala) deb_code=sv ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                     America/Merida) deb_code=mx ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                America/Thunder_Bay) deb_code=ca ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                America/El_Salvador) deb_code=sv ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                    America/Nipigon) deb_code=ca ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                     America/Belize) deb_code=mx ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                    America/Chicago) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                  America/Menominee) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+          America/Indiana/Vincennes) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+         America/Indiana/Petersburg) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                America/Tegucigalpa) deb_code=sv ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                     America/Cancun) deb_code=mx ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+          America/Indiana/Tell_City) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+               America/Indiana/Knox) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+            America/Indiana/Winamac) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+            America/Indiana/Marengo) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                    America/Managua) deb_code=sv ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+       America/Indiana/Indianapolis) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+        America/Kentucky/Louisville) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+              America/Indiana/Vevay) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+        America/Kentucky/Monticello) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                 America/Costa_Rica) deb_code=sv ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                    America/Detroit) deb_code=us ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                     America/Havana) deb_code=mx ; mx_order=ut,ec,la,fr,nl,de,gr,tw,nz ;;
+                     America/Cayman) deb_code=mx ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                  America/Guayaquil) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                     America/Panama) deb_code=sv ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                    America/Toronto) deb_code=ca ; mx_order=ut,la,ec,nl,fr,de,gr,tw,nz ;;
+                     America/Nassau) deb_code=mx ; mx_order=ut,ec,la,fr,nl,de,gr,tw,nz ;;
+                       America/Lima) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                    America/Jamaica) deb_code=mx ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                     America/Bogota) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                   America/New_York) deb_code=us ; mx_order=ut,la,ec,fr,nl,de,gr,tw,nz ;;
+                       America/Port) deb_code=mx ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                 America/Grand_Turk) deb_code=mx ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                   America/Santiago) deb_code=cl ; mx_order=ec,ut,la,fr,nz,nl,de,gr,tw ;;
+                      America/Aruba) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+              America/Santo_Domingo) deb_code=mx ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                   America/Eirunepe) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+     America/Argentina/Rio_Gallegos) deb_code=cl ; mx_order=ec,ut,nz,la,fr,gr,nl,de,tw ;;
+                    America/Curacao) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+          America/Argentina/Mendoza) deb_code=cl ; mx_order=ec,ut,la,fr,nl,nz,gr,de,tw ;;
+                      America/Thule) deb_code=ca ; mx_order=nl,ut,de,fr,la,gr,ec,tw,nz ;;
+         America/Argentina/San_Juan) deb_code=cl ; mx_order=ec,ut,la,fr,nl,nz,de,gr,tw ;;
+                    America/Iqaluit) deb_code=ca ; mx_order=ut,nl,fr,de,la,gr,ec,tw,nz ;;
+          America/Argentina/Ushuaia) deb_code=cl ; mx_order=ec,nz,ut,la,fr,gr,nl,de,tw ;;
+                 America/Kralendijk) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                     America/La_Paz) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                 America/Rio_Branco) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                    America/Caracas) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+         America/Argentina/La_Rioja) deb_code=cl ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+         America/Argentina/San_Luis) deb_code=cl ; mx_order=ec,ut,la,fr,nl,nz,gr,de,tw ;;
+                America/Puerto_Rico) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+        America/Argentina/Catamarca) deb_code=cl ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                America/Pangnirtung) deb_code=ca ; mx_order=ut,nl,fr,de,la,gr,ec,tw,nz ;;
+            America/Argentina/Salta) deb_code=cl ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+            America/Argentina/Jujuy) deb_code=cl ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+          America/Argentina/Tucuman) deb_code=cl ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                  America/St_Thomas) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                    America/Moncton) deb_code=ca ; mx_order=ut,la,ec,fr,nl,de,gr,tw,nz ;;
+                    America/Tortola) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+          America/Argentina/Cordoba) deb_code=cl ; mx_order=ec,ut,la,fr,nl,gr,de,nz,tw ;;
+                America/Porto_Velho) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                    America/Halifax) deb_code=ca ; mx_order=ut,ec,la,fr,nl,de,gr,tw,nz ;;
+                    America/Marigot) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                   America/Anguilla) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+              America/Lower_Princes) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+              America/St_Barthelemy) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                   America/St_Kitts) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                 America/Montserrat) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                    America/Antigua) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                    America/Grenada) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                 America/Guadeloupe) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+              America/Port_of_Spain) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                   America/Dominica) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                 America/St_Vincent) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                 America/Martinique) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                   America/St_Lucia) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+                  America/Boa_Vista) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                  America/Goose_Bay) deb_code=ca ; mx_order=ut,nl,fr,de,la,ec,gr,tw,nz ;;
+                     America/Manaus) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                  America/Glace_Bay) deb_code=ca ; mx_order=ut,fr,nl,ec,la,de,gr,tw,nz ;;
+                   America/Barbados) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,tw,nz ;;
+     America/Argentina/Buenos_Aires) deb_code=cl ; mx_order=ec,ut,la,fr,nl,gr,de,nz,tw ;;
+                     America/Guyana) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                   America/Asuncion) deb_code=br ; mx_order=ec,ut,la,fr,nl,gr,de,nz,tw ;;
+                      America/Blanc) deb_code=ca ; mx_order=ut,nl,fr,de,la,ec,gr,tw,nz ;;
+                   America/Miquelon) deb_code=ca ; mx_order=ut,fr,nl,de,ec,la,gr,tw,nz ;;
+                 America/Montevideo) deb_code=cl ; mx_order=ec,ut,la,fr,nl,gr,de,nz,tw ;;
+                     America/Cuiaba) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                 America/Paramaribo) deb_code=br ; mx_order=ec,ut,fr,la,nl,de,gr,nz,tw ;;
+                   America/Santarem) deb_code=br ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+               America/Campo_Grande) deb_code=br ; mx_order=ec,ut,la,fr,nl,gr,de,nz,tw ;;
+                   America/St_Johns) deb_code=ca ; mx_order=ut,fr,nl,de,ec,la,gr,tw,nz ;;
+                    America/Cayenne) deb_code=br ; mx_order=ec,ut,fr,nl,la,de,gr,nz,tw ;;
+                    America/Godthab) deb_code=ca ; mx_order=ut,nl,fr,de,la,gr,ec,tw,nz ;;
+                      America/Belem) deb_code=br ; mx_order=ec,ut,fr,nl,de,la,gr,nz,tw ;;
+                  America/Araguaina) deb_code=br ; mx_order=ec,ut,fr,nl,la,de,gr,nz,tw ;;
+                  America/Sao_Paulo) deb_code=br ; mx_order=ec,ut,fr,nl,la,gr,de,nz,tw ;;
+                      America/Bahia) deb_code=br ; mx_order=ec,ut,fr,nl,gr,de,la,nz,tw ;;
+                  America/Fortaleza) deb_code=br ; mx_order=ec,ut,fr,nl,gr,de,la,nz,tw ;;
+                     America/Maceio) deb_code=br ; mx_order=ec,ut,fr,nl,gr,de,la,nz,tw ;;
+                     America/Recife) deb_code=br ; mx_order=ec,ut,fr,nl,gr,de,la,nz,tw ;;
+                    America/Noronha) deb_code=br ; mx_order=ec,ut,fr,nl,gr,de,la,tw,nz ;;
+               America/Scoresbysund) deb_code=ca ; mx_order=nl,de,fr,ut,gr,la,ec,tw,nz ;;
+               America/Danmarkshavn) deb_code=ca ; mx_order=nl,de,fr,gr,ut,la,tw,ec,nz ;;
+                 Antarctica/Rothera) deb_code=au ; mx_order=ec,nz,ut,la,gr,fr,nl,de,tw ;;
+                  Antarctica/Palmer) deb_code=au ; mx_order=ec,nz,ut,la,gr,fr,nl,de,tw ;;
+                   Antarctica/Troll) deb_code=au ; mx_order=nz,ec,gr,fr,tw,ut,nl,de,la ;;
+                   Antarctica/Syowa) deb_code=au ; mx_order=nz,ec,gr,tw,fr,de,nl,ut,la ;;
+                  Antarctica/Mawson) deb_code=au ; mx_order=nz,tw,gr,ec,fr,de,nl,ut,la ;;
+                   Antarctica/Davis) deb_code=au ; mx_order=nz,tw,ec,gr,fr,de,nl,la,ut ;;
+                  Antarctica/Vostok) deb_code=au ; mx_order=nz,tw,ec,gr,la,fr,de,ut,nl ;;
+                   Antarctica/Casey) deb_code=au ; mx_order=nz,tw,ec,gr,la,de,fr,nl,ut ;;
+          Antarctica/DumontDUrville) deb_code=au ; mx_order=nz,tw,ec,la,gr,ut,de,fr,nl ;;
+               Antarctica/Macquarie) deb_code=au ; mx_order=nz,tw,la,ec,ut,gr,de,fr,nl ;;
+                 Antarctica/McMurdo) deb_code=au ; mx_order=nz,ec,tw,la,ut,gr,fr,de,nl ;;
+                Arctic/Longyearbyen) deb_code=is ; mx_order=de,nl,fr,gr,ut,la,tw,ec,nz ;;
+                       Asia/Nicosia) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,la,nz ;;
+                          Asia/Gaza) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,la,nz ;;
+                        Asia/Hebron) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,la,nz ;;
+                     Asia/Jerusalem) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,la,nz ;;
+                        Asia/Beirut) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,la,nz ;;
+                         Asia/Amman) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,la,nz ;;
+                      Asia/Damascus) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,ec,la,nz ;;
+                       Asia/Baghdad) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,ec,la,nz ;;
+                       Asia/Yerevan) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,la,ec,nz ;;
+                       Asia/Tbilisi) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,la,ec,nz ;;
+                          Asia/Aden) deb_code=ir ; mx_order=gr,de,fr,nl,tw,ut,nz,ec,la ;;
+                        Asia/Riyadh) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,nz,ec,la ;;
+                        Asia/Kuwait) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,ec,la,nz ;;
+                          Asia/Baku) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,la,ec,nz ;;
+                         Asia/Aqtau) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,la,ec,nz ;;
+                       Asia/Bahrain) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,nz,ec,la ;;
+                          Asia/Oral) deb_code=ru ; mx_order=de,gr,nl,fr,tw,ut,la,ec,nz ;;
+                        Asia/Tehran) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,la,nz,ec ;;
+                         Asia/Qatar) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,nz,ec,la ;;
+                         Asia/Dubai) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,nz,la,ec ;;
+                        Asia/Aqtobe) deb_code=ru ; mx_order=gr,de,nl,fr,tw,ut,la,ec,nz ;;
+                      Asia/Ashgabat) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,la,nz,ec ;;
+                        Asia/Muscat) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,nz,la,ec ;;
+                 Asia/Yekaterinburg) deb_code=ru ; mx_order=de,gr,nl,fr,tw,ut,la,ec,nz ;;
+                     Asia/Qyzylorda) deb_code=ru ; mx_order=gr,de,nl,fr,tw,ut,la,nz,ec ;;
+                     Asia/Samarkand) deb_code=ir ; mx_order=gr,de,nl,fr,tw,ut,nz,la,ec ;;
+                       Asia/Karachi) deb_code=ir ; mx_order=gr,tw,de,nl,fr,nz,ut,la,ec ;;
+                      Asia/Dushanbe) deb_code=ir ; mx_order=gr,de,nl,tw,fr,ut,nz,la,ec ;;
+                         Asia/Kabul) deb_code=ir ; mx_order=gr,de,tw,nl,fr,ut,nz,la,ec ;;
+                      Asia/Tashkent) deb_code=cn ; mx_order=gr,de,nl,tw,fr,ut,nz,la,ec ;;
+                          Asia/Omsk) deb_code=ru ; mx_order=de,gr,nl,fr,tw,ut,la,nz,ec ;;
+                       Asia/Bishkek) deb_code=cn ; mx_order=gr,de,tw,nl,fr,ut,nz,la,ec ;;
+                        Asia/Almaty) deb_code=ru ; mx_order=gr,tw,de,nl,fr,ut,nz,la,ec ;;
+                       Asia/Colombo) deb_code=th ; mx_order=tw,gr,de,nl,fr,nz,ut,la,ec ;;
+                   Asia/Novosibirsk) deb_code=ru ; mx_order=de,tw,gr,nl,fr,ut,la,nz,ec ;;
+                       Asia/Barnaul) deb_code=ru ; mx_order=tw,de,gr,nl,fr,ut,la,nz,ec ;;
+                     Asia/Kathmandu) deb_code=cn ; mx_order=tw,gr,de,nl,fr,nz,ut,la,ec ;;
+                  Asia/Novokuznetsk) deb_code=ru ; mx_order=tw,de,gr,nl,fr,ut,la,nz,ec ;;
+                        Asia/Urumqi) deb_code=cn ; mx_order=tw,gr,de,nl,fr,nz,ut,la,ec ;;
+                       Asia/Kolkata) deb_code=th ; mx_order=tw,gr,de,nl,fr,nz,ut,la,ec ;;
+                       Asia/Thimphu) deb_code=cn ; mx_order=tw,gr,de,nl,fr,nz,ut,la,ec ;;
+                         Asia/Dhaka) deb_code=th ; mx_order=tw,gr,de,nl,fr,nz,ut,la,ec ;;
+                          Asia/Hovd) deb_code=cn ; mx_order=tw,de,gr,nl,fr,ut,nz,la,ec ;;
+                   Asia/Krasnoyarsk) deb_code=ru ; mx_order=tw,de,nl,gr,fr,ut,la,nz,ec ;;
+                       Asia/Rangoon) deb_code=th ; mx_order=tw,gr,nz,de,nl,fr,la,ut,ec ;;
+                       Asia/Bangkok) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                  Asia/Kuala_Lumpur) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                     Asia/Vientiane) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                     Asia/Singapore) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                       Asia/Irkutsk) deb_code=ru ; mx_order=tw,de,nl,gr,fr,la,ut,nz,ec ;;
+                    Asia/Phnom_Penh) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                   Asia/Ho_Chi_Minh) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                       Asia/Jakarta) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                   Asia/Ulaanbaatar) deb_code=ru ; mx_order=tw,de,gr,nl,fr,nz,la,ut,ec ;;
+                     Asia/Pontianak) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                       Asia/Kuching) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                         Asia/Chita) deb_code=ru ; mx_order=tw,de,nl,gr,fr,la,nz,ut,ec ;;
+                         Asia/Macau) deb_code=hk ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                     Asia/Hong_Kong) deb_code=hk ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                    Asia/Choibalsan) deb_code=ru ; mx_order=tw,de,nl,gr,fr,nz,la,ut,ec ;;
+                        Asia/Brunei) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                      Asia/Makassar) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                        Asia/Manila) deb_code=hk ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                      Asia/Shanghai) deb_code=cn ; mx_order=tw,nz,de,gr,nl,fr,la,ut,ec ;;
+                        Asia/Taipei) deb_code=tw ; mx_order=tw,nz,de,gr,nl,fr,la,ut,ec ;;
+                          Asia/Dili) deb_code=hk ; mx_order=nz,tw,gr,de,nl,la,fr,ut,ec ;;
+                     Asia/Pyongyang) deb_code=kr ; mx_order=tw,nz,de,gr,nl,fr,la,ut,ec ;;
+                         Asia/Seoul) deb_code=kr ; mx_order=tw,nz,de,gr,nl,fr,la,ut,ec ;;
+                       Asia/Yakutsk) deb_code=ru ; mx_order=tw,de,nl,fr,gr,la,ut,nz,ec ;;
+                   Asia/Vladivostok) deb_code=ru ; mx_order=tw,de,nz,nl,gr,fr,la,ut,ec ;;
+                      Asia/Khandyga) deb_code=ru ; mx_order=tw,de,nl,fr,gr,la,ut,nz,ec ;;
+                         Asia/Tokyo) deb_code=jp ; mx_order=tw,nz,la,de,nl,gr,fr,ut,ec ;;
+                      Asia/Jayapura) deb_code=tw ; mx_order=nz,tw,la,gr,de,nl,fr,ut,ec ;;
+                      Asia/Sakhalin) deb_code=ru ; mx_order=tw,la,de,nz,nl,fr,gr,ut,ec ;;
+                           Asia/Ust) deb_code=ru ; mx_order=tw,de,nl,fr,la,gr,ut,nz,ec ;;
+                       Asia/Magadan) deb_code=ru ; mx_order=tw,la,de,nl,fr,gr,ut,nz,ec ;;
+                 Asia/Srednekolymsk) deb_code=ru ; mx_order=tw,de,nl,la,fr,ut,gr,nz,ec ;;
+                     Asia/Kamchatka) deb_code=ru ; mx_order=tw,la,de,nl,ut,fr,nz,gr,ec ;;
+                        Asia/Anadyr) deb_code=ru ; mx_order=la,tw,ut,de,nl,fr,gr,nz,ec ;;
+                   Atlantic/Bermuda) deb_code=pt ; mx_order=ut,ec,la,fr,nl,de,gr,tw,nz ;;
+                   Atlantic/Stanley) deb_code=pt ; mx_order=ec,ut,nz,la,fr,gr,nl,de,tw ;;
+             Atlantic/South_Georgia) deb_code=pt ; mx_order=ec,nz,ut,gr,fr,nl,la,de,tw ;;
+                    Atlantic/Azores) deb_code=pt ; mx_order=fr,nl,de,ut,gr,ec,la,tw,nz ;;
+                Atlantic/Cape_Verde) deb_code=pt ; mx_order=fr,nl,gr,de,ec,ut,la,tw,nz ;;
+                 Atlantic/Reykjavik) deb_code=is ; mx_order=nl,fr,de,gr,ut,la,ec,tw,nz ;;
+                   Atlantic/Madeira) deb_code=pt ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                    Atlantic/Canary) deb_code=pt ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                     Atlantic/Faroe) deb_code=is ; mx_order=nl,de,fr,gr,ut,la,ec,tw,nz ;;
+                 Atlantic/St_Helena) deb_code=pt ; mx_order=gr,fr,nl,de,ec,ut,la,tw,nz ;;
+                    Australia/Perth) deb_code=au ; mx_order=nz,tw,gr,de,nl,fr,la,ec,ut ;;
+                    Australia/Eucla) deb_code=au ; mx_order=nz,tw,gr,la,de,nl,fr,ec,ut ;;
+                   Australia/Darwin) deb_code=au ; mx_order=nz,tw,gr,la,de,nl,fr,ut,ec ;;
+                 Australia/Adelaide) deb_code=au ; mx_order=nz,tw,la,gr,ec,de,nl,fr,ut ;;
+              Australia/Broken_Hill) deb_code=au ; mx_order=nz,tw,la,gr,ec,de,nl,fr,ut ;;
+                   Australia/Currie) deb_code=au ; mx_order=nz,tw,la,ec,gr,de,nl,fr,ut ;;
+                Australia/Melbourne) deb_code=au ; mx_order=nz,tw,la,ec,gr,de,nl,ut,fr ;;
+                   Australia/Hobart) deb_code=au ; mx_order=nz,tw,la,ec,gr,de,ut,nl,fr ;;
+                 Australia/Lindeman) deb_code=au ; mx_order=nz,tw,la,gr,de,ec,nl,ut,fr ;;
+                   Australia/Sydney) deb_code=au ; mx_order=nz,tw,la,ec,gr,ut,de,nl,fr ;;
+                 Australia/Brisbane) deb_code=au ; mx_order=nz,tw,la,ec,gr,ut,de,nl,fr ;;
+                Australia/Lord_Howe) deb_code=au ; mx_order=nz,tw,la,ec,ut,gr,de,nl,fr ;;
+                      Europe/Lisbon) deb_code=pt ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                      Europe/Dublin) deb_code=ie ; mx_order=nl,fr,de,gr,ut,ec,la,tw,nz ;;
+                   Europe/Gibraltar) deb_code=pt ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                 Europe/Isle_of_Man) deb_code=ie ; mx_order=nl,fr,de,gr,ut,ec,la,tw,nz ;;
+                      Europe/Madrid) deb_code=es ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                    Europe/Guernsey) deb_code=uk ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                      Europe/Jersey) deb_code=uk ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                      Europe/London) deb_code=uk ; mx_order=nl,fr,de,gr,ut,ec,la,tw,nz ;;
+                     Europe/Andorra) deb_code=es ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                       Europe/Paris) deb_code=fr ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                    Europe/Brussels) deb_code=be ; mx_order=nl,fr,de,gr,ut,ec,la,tw,nz ;;
+                   Europe/Amsterdam) deb_code=nl ; mx_order=nl,fr,de,gr,ut,ec,la,tw,nz ;;
+                  Europe/Luxembourg) deb_code=be ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                      Europe/Monaco) deb_code=ch ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                      Europe/Zurich) deb_code=ch ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                    Europe/Busingen) deb_code=de ; mx_order=fr,nl,de,gr,ut,ec,la,tw,nz ;;
+                       Europe/Vaduz) deb_code=ch ; mx_order=fr,de,nl,gr,ut,ec,tw,la,nz ;;
+                        Europe/Oslo) deb_code=no ; mx_order=de,nl,fr,gr,ut,la,tw,ec,nz ;;
+                     Europe/Vatican) deb_code=it ; mx_order=gr,fr,de,nl,ut,ec,tw,la,nz ;;
+                  Europe/San_Marino) deb_code=it ; mx_order=fr,de,nl,gr,ut,ec,tw,la,nz ;;
+                        Europe/Rome) deb_code=it ; mx_order=gr,fr,de,nl,ut,ec,tw,la,nz ;;
+                  Europe/Copenhagen) deb_code=dk ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                      Europe/Berlin) deb_code=de ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                      Europe/Prague) deb_code=cz ; mx_order=de,nl,fr,gr,ut,tw,ec,la,nz ;;
+                       Europe/Malta) deb_code=it ; mx_order=gr,fr,de,nl,ut,ec,tw,la,nz ;;
+                   Europe/Ljubljana) deb_code=si ; mx_order=de,fr,nl,gr,ut,tw,ec,la,nz ;;
+                      Europe/Zagreb) deb_code=hr ; mx_order=de,fr,gr,nl,ut,tw,ec,la,nz ;;
+                      Europe/Vienna) deb_code=at ; mx_order=de,nl,fr,gr,ut,tw,ec,la,nz ;;
+                  Europe/Bratislava) deb_code=sk ; mx_order=de,nl,fr,gr,ut,tw,ec,la,nz ;;
+                   Europe/Stockholm) deb_code=se ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                    Europe/Sarajevo) deb_code=hr ; mx_order=gr,de,fr,nl,ut,tw,ec,la,nz ;;
+                    Europe/Budapest) deb_code=hu ; mx_order=de,gr,nl,fr,ut,tw,ec,la,nz ;;
+                   Europe/Podgorica) deb_code=bg ; mx_order=gr,de,fr,nl,ut,tw,ec,la,nz ;;
+                      Europe/Tirane) deb_code=bg ; mx_order=gr,de,fr,nl,ut,tw,ec,la,nz ;;
+                   Europe/Mariehamn) deb_code=se ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                    Europe/Belgrade) deb_code=hu ; mx_order=gr,de,nl,fr,ut,tw,ec,la,nz ;;
+                 Europe/Kaliningrad) deb_code=ru ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                      Europe/Warsaw) deb_code=pl ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                      Europe/Skopje) deb_code=bg ; mx_order=gr,de,fr,nl,ut,tw,ec,la,nz ;;
+                    Europe/Uzhgorod) deb_code=ua ; mx_order=de,gr,nl,fr,ut,tw,la,ec,nz ;;
+                       Europe/Sofia) deb_code=bg ; mx_order=gr,de,fr,nl,ut,tw,ec,la,nz ;;
+                      Europe/Athens) deb_code=gr ; mx_order=gr,de,fr,nl,ut,tw,ec,la,nz ;;
+                        Europe/Riga) deb_code=lt ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                     Europe/Tallinn) deb_code=ee ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                    Europe/Helsinki) deb_code=fi ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                     Europe/Vilnius) deb_code=lt ; mx_order=de,nl,fr,gr,ut,tw,la,ec,nz ;;
+                   Europe/Bucharest) deb_code=ro ; mx_order=gr,de,nl,fr,ut,tw,ec,la,nz ;;
+                       Europe/Minsk) deb_code=by ; mx_order=de,nl,gr,fr,ut,tw,la,ec,nz ;;
+                    Europe/Chisinau) deb_code=ro ; mx_order=gr,de,nl,fr,ut,tw,la,ec,nz ;;
+                    Europe/Istanbul) deb_code=tr ; mx_order=gr,de,nl,fr,ut,tw,ec,la,nz ;;
+                        Europe/Kiev) deb_code=ua ; mx_order=de,gr,nl,fr,ut,tw,la,ec,nz ;;
+                  Europe/Simferopol) deb_code=ru ; mx_order=gr,de,nl,fr,tw,ut,la,ec,nz ;;
+                  Europe/Zaporozhye) deb_code=ua ; mx_order=gr,de,nl,fr,tw,ut,la,ec,nz ;;
+                      Europe/Moscow) deb_code=ru ; mx_order=de,nl,gr,fr,tw,ut,la,ec,nz ;;
+                   Europe/Volgograd) deb_code=ru ; mx_order=gr,de,nl,fr,tw,ut,la,ec,nz ;;
+                   Europe/Astrakhan) deb_code=ru ; mx_order=gr,de,nl,fr,tw,ut,la,ec,nz ;;
+                   Europe/Ulyanovsk) deb_code=ru ; mx_order=de,gr,nl,fr,tw,ut,la,ec,nz ;;
+                      Europe/Samara) deb_code=ru ; mx_order=de,gr,nl,fr,tw,ut,la,ec,nz ;;
+                      Indian/Comoro) deb_code=ir ; mx_order=gr,de,fr,nl,tw,nz,ec,ut,la ;;
+                     Indian/Mayotte) deb_code=ir ; mx_order=gr,de,fr,nl,tw,nz,ec,ut,la ;;
+                Indian/Antananarivo) deb_code=ir ; mx_order=gr,de,fr,nl,tw,nz,ec,ut,la ;;
+                     Indian/Reunion) deb_code=au ; mx_order=gr,tw,de,fr,nl,nz,ec,ut,la ;;
+                        Indian/Mahe) deb_code=ir ; mx_order=gr,de,fr,tw,nl,nz,ut,ec,la ;;
+                   Indian/Mauritius) deb_code=au ; mx_order=gr,tw,de,fr,nl,nz,ec,ut,la ;;
+                   Indian/Kerguelen) deb_code=au ; mx_order=nz,tw,gr,de,fr,nl,ec,ut,la ;;
+                      Indian/Chagos) deb_code=th ; mx_order=tw,gr,de,nz,nl,fr,ut,ec,la ;;
+                    Indian/Maldives) deb_code=th ; mx_order=tw,gr,de,nl,fr,nz,ut,la,ec ;;
+                       Indian/Cocos) deb_code=th ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                   Indian/Christmas) deb_code=au ; mx_order=tw,nz,gr,de,nl,fr,la,ut,ec ;;
+                     Pacific/Midway) deb_code=us ; mx_order=la,tw,nz,ut,de,ec,nl,fr,gr ;;
+                    Pacific/Chatham) deb_code=nz ; mx_order=nz,tw,la,ec,ut,gr,de,nl,fr ;;
+                     Pacific/Wallis) deb_code=nc ; mx_order=nz,tw,la,ec,ut,de,nl,fr,gr ;;
+                  Pacific/Tongatapu) deb_code=nc ; mx_order=nz,tw,la,ec,ut,de,nl,fr,gr ;;
+                       Pacific/Apia) deb_code=nc ; mx_order=nz,la,tw,ec,ut,de,nl,fr,gr ;;
+                    Pacific/Fakaofo) deb_code=nc ; mx_order=nz,la,tw,ec,ut,de,nl,fr,gr ;;
+                  Pacific/Enderbury) deb_code=us ; mx_order=nz,la,tw,ec,ut,de,nl,fr,gr ;;
+                  Pacific/Pago_Pago) deb_code=nc ; mx_order=nz,la,tw,ec,ut,nl,de,fr,gr ;;
+                       Pacific/Niue) deb_code=nz ; mx_order=nz,la,tw,ec,ut,nl,de,fr,gr ;;
+                   Pacific/Johnston) deb_code=us ; mx_order=la,nz,tw,ut,ec,nl,de,fr,gr ;;
+                  Pacific/Rarotonga) deb_code=nz ; mx_order=nz,la,ec,tw,ut,nl,de,fr,gr ;;
+                   Pacific/Honolulu) deb_code=us ; mx_order=la,nz,ut,tw,ec,nl,de,fr,gr ;;
+                 Pacific/Kiritimati) deb_code=us ; mx_order=la,nz,tw,ec,ut,nl,de,fr,gr ;;
+                     Pacific/Tahiti) deb_code=nz ; mx_order=nz,la,ec,ut,tw,nl,fr,de,gr ;;
+                  Pacific/Marquesas) deb_code=cl ; mx_order=la,nz,ec,ut,tw,nl,fr,de,gr ;;
+                    Pacific/Gambier) deb_code=cl ; mx_order=la,nz,ec,ut,tw,nl,fr,de,gr ;;
+                   Pacific/Pitcairn) deb_code=cl ; mx_order=la,ec,nz,ut,tw,fr,nl,de,gr ;;
+                     Pacific/Easter) deb_code=cl ; mx_order=ec,la,ut,nz,fr,nl,de,tw,gr ;;
+                  Pacific/Galapagos) deb_code=cl ; mx_order=ec,ut,la,fr,nl,de,gr,nz,tw ;;
+                      Pacific/Palau) deb_code=nc ; mx_order=tw,nz,la,gr,de,nl,fr,ut,ec ;;
+                       Pacific/Guam) deb_code=nc ; mx_order=tw,nz,la,de,gr,nl,fr,ut,ec ;;
+                     Pacific/Saipan) deb_code=nc ; mx_order=tw,nz,la,de,gr,nl,fr,ut,ec ;;
+               Pacific/Port_Moresby) deb_code=nc ; mx_order=nz,tw,la,gr,de,nl,fr,ut,ec ;;
+                      Pacific/Chuuk) deb_code=nc ; mx_order=tw,nz,la,de,gr,nl,ut,fr,ec ;;
+               Pacific/Bougainville) deb_code=nc ; mx_order=nz,tw,la,ut,de,gr,nl,ec,fr ;;
+                    Pacific/Pohnpei) deb_code=nc ; mx_order=nz,tw,la,ut,de,nl,gr,fr,ec ;;
+                Pacific/Guadalcanal) deb_code=nc ; mx_order=nz,tw,la,ut,ec,de,gr,nl,fr ;;
+                     Pacific/Kosrae) deb_code=nc ; mx_order=nz,tw,la,ut,de,nl,ec,gr,fr ;;
+                     Pacific/Noumea) deb_code=nc ; mx_order=nz,tw,la,ec,ut,de,gr,nl,fr ;;
+                       Pacific/Wake) deb_code=us ; mx_order=tw,nz,la,ut,de,nl,fr,gr,ec ;;
+                      Pacific/Nauru) deb_code=nc ; mx_order=nz,tw,la,ut,ec,de,nl,gr,fr ;;
+                  Pacific/Kwajalein) deb_code=nc ; mx_order=nz,tw,la,ut,de,nl,ec,fr,gr ;;
+                    Pacific/Norfolk) deb_code=nc ; mx_order=nz,tw,la,ec,ut,gr,de,nl,fr ;;
+                      Pacific/Efate) deb_code=nc ; mx_order=nz,tw,la,ec,ut,de,nl,gr,fr ;;
+                     Pacific/Majuro) deb_code=nc ; mx_order=nz,tw,la,ut,ec,de,nl,fr,gr ;;
+                     Pacific/Tarawa) deb_code=nc ; mx_order=nz,tw,la,ut,ec,de,nl,fr,gr ;;
+                   Pacific/Auckland) deb_code=nz ; mx_order=nz,tw,la,ec,ut,gr,de,nl,fr ;;
+                       Pacific/Fiji) deb_code=nc ; mx_order=nz,tw,la,ec,ut,de,nl,fr,gr ;;
+                   Pacific/Funafuti) deb_code=nc ; mx_order=nz,tw,la,ec,ut,de,nl,fr,gr ;;
+    esac
+}
 
 main "$@"
