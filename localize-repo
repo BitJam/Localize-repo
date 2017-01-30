@@ -5,7 +5,7 @@ ME=${0##*/}
 ZDIR=/usr/share/zoneinfo
 SDIR=/etc/apt/sources.list.d
 
-MIRROR_PREFIXES="de ec fr gr la nl nz ut tw"
+MIRROR_PREFIXES="de ec fr gr la nl nz ut se tw"
 HOST_PREFIXES="$MIRROR_PREFIXES old_us"
 HOST_TYPES="AX MX MP"
 US_HOST_LIST="la ut"
@@ -45,15 +45,20 @@ tw_MP_HOST=http://ftp.yzu.edu.tw/Linux/mx-workspace/mepiscr
 tw_MX_HOST=http://ftp.yzu.edu.tw/Linux/mx-workspace/mx
 tw_LOCATION="Taiwan"
 
-de_AX_HOST=http://de.mirror.vinzv.de/mxlinux/packages/antix
-de_MP_HOST=http://de.mirror.vinzv.de/mxlinux/packages/mepiscr
-de_MX_HOST=http://de.mirror.vinzv.de/mxlinux/packages/mx
+de_AX_HOST=http://de.mirror.mxlinux.de/packages/antix
+de_MP_HOST=http://de.mirror.mxlinux.de/packages/mepiscr
+de_MX_HOST=http://de.mirror.mxlinux.de/packages/mx
 de_LOCATION="Germany"
 
-fr_AX_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/antix
-fr_MP_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/mepiscr
-fr_MX_HOST=http://fr.mirror.vinzv.de/mxlinux/packages/mx
+fr_AX_HOST=http://fr.mirror.mxlinux.de/packages/antix
+fr_MP_HOST=http://fr.mirror.mxlinux.de/packages/mepiscr
+fr_MX_HOST=http://fr.mirror.mxlinux.de/packages/mx
 fr_LOCATION="France"
+
+se_AX_HOST=http://se.mirror.mxlinux.de/packages/antix
+se_MP_HOST=http://se.mirror.mxlinux.de/packages/mepiscr
+se_MX_HOST=http://se.mirror.mxlinux.de/packages/mx
+se_LOCATION="Sweden"
 
 old_us_AX_HOST=http://antix.daveserver.info
 old_us_MP_HOST=http://main.mepis-deb.org/mepiscr
