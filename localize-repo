@@ -592,35 +592,35 @@ get_codes() {
                           Asia/Omsk) deb_code=ru ; mx_order=se,de,gr,nl,fr,tw,ut,la,nz,ec ;;
                        Asia/Bishkek) deb_code=cn ; mx_order=se,gr,de,tw,nl,fr,ut,nz,la,ec ;;
                         Asia/Almaty) deb_code=ru ; mx_order=se,gr,tw,de,nl,fr,ut,nz,la,ec ;;
-                       Asia/Colombo) deb_code=th ; mx_order=tw,gr,se,de,nl,fr,nz,ut,la,ec ;;
+                       Asia/Colombo) deb_code=hk ; mx_order=tw,gr,se,de,nl,fr,nz,ut,la,ec ;;
                    Asia/Novosibirsk) deb_code=ru ; mx_order=se,de,tw,gr,nl,fr,ut,la,nz,ec ;;
                        Asia/Barnaul) deb_code=ru ; mx_order=se,tw,de,gr,nl,fr,ut,la,nz,ec ;;
                      Asia/Kathmandu) deb_code=cn ; mx_order=tw,gr,se,de,nl,fr,nz,ut,la,ec ;;
                   Asia/Novokuznetsk) deb_code=ru ; mx_order=se,tw,de,gr,nl,fr,ut,la,nz,ec ;;
                         Asia/Urumqi) deb_code=cn ; mx_order=tw,se,gr,de,nl,fr,nz,ut,la,ec ;;
-                       Asia/Kolkata) deb_code=th ; mx_order=tw,gr,se,de,nl,fr,nz,ut,la,ec ;;
+                       Asia/Kolkata) deb_code=cn ; mx_order=tw,gr,se,de,nl,fr,nz,ut,la,ec ;;
                        Asia/Thimphu) deb_code=cn ; mx_order=tw,gr,se,de,nl,fr,nz,ut,la,ec ;;
-                         Asia/Dhaka) deb_code=th ; mx_order=tw,gr,se,de,nl,fr,nz,ut,la,ec ;;
+                         Asia/Dhaka) deb_code=cn ; mx_order=tw,gr,se,de,nl,fr,nz,ut,la,ec ;;
                           Asia/Hovd) deb_code=cn ; mx_order=tw,se,de,gr,nl,fr,ut,nz,la,ec ;;
                    Asia/Krasnoyarsk) deb_code=ru ; mx_order=tw,se,de,nl,gr,fr,ut,la,nz,ec ;;
-                       Asia/Rangoon) deb_code=th ; mx_order=tw,gr,se,nz,de,nl,fr,la,ut,ec ;;
-                       Asia/Bangkok) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
-                  Asia/Kuala_Lumpur) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
-                     Asia/Vientiane) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
-                     Asia/Singapore) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                       Asia/Rangoon) deb_code=hk ; mx_order=tw,gr,se,nz,de,nl,fr,la,ut,ec ;;
+                       Asia/Bangkok) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                  Asia/Kuala_Lumpur) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                     Asia/Vientiane) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                     Asia/Singapore) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
                        Asia/Irkutsk) deb_code=ru ; mx_order=tw,se,de,nl,gr,fr,la,ut,nz,ec ;;
-                    Asia/Phnom_Penh) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
-                   Asia/Ho_Chi_Minh) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
-                       Asia/Jakarta) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                    Asia/Phnom_Penh) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                   Asia/Ho_Chi_Minh) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                       Asia/Jakarta) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
                    Asia/Ulaanbaatar) deb_code=ru ; mx_order=tw,se,de,gr,nl,fr,nz,la,ut,ec ;;
-                     Asia/Pontianak) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
-                       Asia/Kuching) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                     Asia/Pontianak) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                       Asia/Kuching) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
                          Asia/Chita) deb_code=ru ; mx_order=tw,se,de,nl,gr,fr,la,nz,ut,ec ;;
                          Asia/Macau) deb_code=hk ; mx_order=tw,nz,se,gr,de,nl,fr,la,ut,ec ;;
                      Asia/Hong_Kong) deb_code=hk ; mx_order=tw,nz,se,gr,de,nl,fr,la,ut,ec ;;
                     Asia/Choibalsan) deb_code=ru ; mx_order=tw,se,de,nl,gr,fr,nz,la,ut,ec ;;
-                        Asia/Brunei) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
-                      Asia/Makassar) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                        Asia/Brunei) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                      Asia/Makassar) deb_code=hk ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
                         Asia/Manila) deb_code=hk ; mx_order=tw,nz,se,gr,de,nl,fr,la,ut,ec ;;
                       Asia/Shanghai) deb_code=cn ; mx_order=tw,nz,se,de,gr,nl,fr,la,ut,ec ;;
                         Asia/Taipei) deb_code=tw ; mx_order=tw,nz,se,de,gr,nl,fr,la,ut,ec ;;
@@ -725,9 +725,9 @@ get_codes() {
                         Indian/Mahe) deb_code=ir ; mx_order=gr,de,se,fr,tw,nl,nz,ut,ec,la ;;
                    Indian/Mauritius) deb_code=au ; mx_order=gr,tw,de,fr,se,nl,nz,ec,ut,la ;;
                    Indian/Kerguelen) deb_code=au ; mx_order=nz,tw,gr,de,fr,nl,se,ec,ut,la ;;
-                      Indian/Chagos) deb_code=th ; mx_order=tw,gr,de,nz,se,nl,fr,ut,ec,la ;;
-                    Indian/Maldives) deb_code=th ; mx_order=tw,gr,de,se,nl,fr,nz,ut,la,ec ;;
-                       Indian/Cocos) deb_code=th ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
+                      Indian/Chagos) deb_code=ir ; mx_order=tw,gr,de,nz,se,nl,fr,ut,ec,la ;;
+                    Indian/Maldives) deb_code=ir ; mx_order=tw,gr,de,se,nl,fr,nz,ut,la,ec ;;
+                       Indian/Cocos) deb_code=au ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
                    Indian/Christmas) deb_code=au ; mx_order=tw,nz,gr,se,de,nl,fr,la,ut,ec ;;
                      Pacific/Midway) deb_code=us ; mx_order=la,tw,nz,ut,se,de,ec,nl,fr,gr ;;
                     Pacific/Chatham) deb_code=nz ; mx_order=nz,tw,la,ec,ut,se,gr,de,nl,fr ;;
@@ -768,7 +768,6 @@ get_codes() {
                    Pacific/Auckland) deb_code=nz ; mx_order=nz,tw,la,ec,ut,se,gr,de,nl,fr ;;
                        Pacific/Fiji) deb_code=nc ; mx_order=nz,tw,la,ec,ut,se,de,nl,fr,gr ;;
                    Pacific/Funafuti) deb_code=nc ; mx_order=nz,tw,la,ec,ut,se,de,nl,fr,gr ;;
-
     esac
 }
 

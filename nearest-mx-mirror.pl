@@ -11,7 +11,7 @@ my $IGNORE_DEB_TZ = "Canary|Ceuta";
 
 my @DEB_CODES =  qw/at au be bg br by ca ch cl cn cz de dk ee es
     fi fr gr hk hr hu ie ir is it jp kr lt mx nc nl no nz pl pt
-    ro ru se si sk sv th tr tw ua uk us/;
+    ro ru se si sk sv tr tw ua uk us/;
 
 my @CITIES;
 my $CCODES;
