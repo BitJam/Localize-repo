@@ -10,7 +10,7 @@ HOST_PREFIXES="$MIRROR_PREFIXES old_us"
 HOST_TYPES="AX MX MP"
 US_HOST_LIST="la ut"
 
-ut_AX_HOST=http://antix.daveserver.info
+ut_AX_HOST=http://repo.antixlinux.com
 ut_MP_HOST=http://mxrepo.com/mepiscr
 ut_MX_HOST=http://mxrepo.com/mx
 ut_LOCATION="Utah, USA"
